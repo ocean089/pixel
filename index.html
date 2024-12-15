@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小小兵貼地磚，一起來幫幫我</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0;
+            align-items: start;
+        }
+        .grid-row-label {
+            display: grid;
+            grid-template-rows: 40px repeat(15, 40px);
+            gap: 0;
+        }
+        .grid-row-label span {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            color: #333;
+            line-height: 40px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(15, 40px);
+            grid-template-rows: repeat(15, 40px);
+            border: 2px solid #000;
+            margin: auto;
+        }
+        .grid-col-label {
+            display: grid;
+            grid-template-columns: repeat(15, 40px);
+            justify-items: center;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0px;
+        }
+        .grid-col-label span {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 40px;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #ccc;
+            background-color: white;
+        }
+        .cell:hover {
+            cursor: pointer;
+        }
+        .task-area {
+            width: 300px;
+            text-align: left;
+        }
+        .task-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .task-buttons button {
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .task-buttons button.active {
+            background-color: red;
+        }
+        .task-buttons button:hover {
+            background-color: #0056b3;
+        }
+        .current-task {
+            font-size: 24px;
+            line-height: 2;
+            margin-top: 10px;
+        }
+        .correct {
+            color: gray !important;
+            text-decoration: line-through;
+        }
+        .highlight-yellow {
+            background-color: #000;
+            color: yellow;
+            padding: 2px;
+        }
+        .color-picker-popup {
+            display: none;
+            position: absolute;
+            background-color: #fff;
+            border: 2px solid #000;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+        }
+        .color-picker-popup .color-button {
+            margin: 5px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .red { background-color: red; }
+        .yellow { background-color: yellow; }
+        .black { background-color: black; }
+        .green { background-color: green; }
+        .blue { background-color: blue; }
+        .white { background-color: white; border: 1px dashed #000; }
+        .clear-button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .clear-button:hover {
+            background-color: #0056b3;
+        }
+        #completion-message {
+            display: none;
+            font-size: 24px;
+            font-weight: bold;
+            color: green;
+            margin-top: 20px;
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <h1>小小兵貼地磚，一起幫幫我</h1>
+    <button class="clear-button" id="clearButton">清除所有格子</button>
+    <div class="container">
+        <div class="task-area">
+            <div class="task-buttons">
+                <button id="自由發揮" onclick="showTask('自由發揮')">自由發揮</button>
+                <button id="第一題" onclick="showTask('第一題')">第一題</button>
+                <button id="第二題" onclick="showTask('第二題')">第二題</button>
+                <button id="第三題" onclick="showTask('第三題')">第三題</button>
+                <button id="第四題" onclick="showTask('第四題')">第四題</button>
+            </div>
+            <div id="current-task" class="current-task">請選擇題目</div>
+        </div>
+        <div class="grid-container">
+            <div class="grid-row-label">
+                <span></span>
+                <span>ㄅ</span>
+                <span>ㄆ</span>
+                <span>ㄇ</span>
+                <span>ㄈ</span>
+                <span>ㄉ</span>
+                <span>ㄊ</span>
+                <span>ㄋ</span>
+                <span>ㄌ</span>
+                <span>ㄍ</span>
+                <span>ㄎ</span>
+                <span>ㄏ</span>
+                <span>ㄐ</span>
+                <span>ㄑ</span>
+                <span>ㄒ</span>
+                <span>ㄓ</span>
+            </div>
+            <div>
+                <div class="grid-col-label">
+                    <span>1</span>
+                    <span>2</span>
+                    <span>3</span>
+                    <span>4</span>
+                    <span>5</span>
+                    <span>6</span>
+                    <span>7</span>
+                    <span>8</span>
+                    <span>9</span>
+                    <span>10</span>
+                    <span>11</span>
+                    <span>12</span>
+                    <span>13</span>
+                    <span>14</span>
+                    <span>15</span>
+                </div>
+                <div class="grid" id="grid"></div>
+            </div>
+        </div>
+    </div>
+    <div id="popup" class="color-picker-popup">
+        <div class="color-button red" data-color="red"></div>
+        <div class="color-button yellow" data-color="yellow"></div>
+        <div class="color-button black" data-color="black"></div>
+        <div class="color-button green" data-color="green"></div>
+        <div class="color-button blue" data-color="blue"></div>
+        <div class="color-button white" data-color="white"></div>
+    </div>
+
+    <div id="completion-message">完成！恭喜你完成了所有填色！</div>
+
+    <script>
+        const grid = document.getElementById('grid');
+        const popup = document.getElementById('popup');
+        const completionMessage = document.getElementById('completion-message');
+        const currentTaskDiv = document.getElementById('current-task');
+        const taskButtons = document.querySelectorAll('.task-buttons button');
+        let selectedCell = null;
+
+        const tasks = {
+            '自由發揮': { text: '自由發揮（請自由創作）', cells: {} },
+            '第一題': {
+                text: '<span style="color: red; font-weight: bold;">紅色：</span> ㄉ-2, ㄊ-2, ㄊ-4, ㄋ-3<br>' +
+                      '<span style="color: yellow; font-weight: bold;" class="highlight-yellow">黃色：</span> ㄅ-4, ㄆ-4, ㄆ-5, ㄇ-4, ㄇ-6<br>' +
+                      '<span style="color: blue; font-weight: bold;">藍色：</span> ㄈ-3, ㄈ-4, ㄉ-3, ㄉ-4, ㄊ-3',
+                cells: {
+                    'ㄉ-2': 'red', 'ㄊ-2': 'red', 'ㄊ-4': 'red', 'ㄋ-3': 'red',
+                    'ㄅ-4': 'yellow', 'ㄆ-4': 'yellow', 'ㄆ-5': 'yellow', 'ㄇ-4': 'yellow', 'ㄇ-6': 'yellow',
+                    'ㄈ-3': 'blue', 'ㄈ-4': 'blue', 'ㄉ-3': 'blue', 'ㄉ-4': 'blue', 'ㄊ-3': 'blue'
+                }
+            },
+            '第二題': {
+                text: '<span style="color: red; font-weight: bold;">紅色：</span> ㄅ-2, ㄆ-1, ㄆ-3, ㄇ-3, ㄈ-3<br>' +
+                      '<span style="color: black; font-weight: bold;">黑色：</span> ㄆ-2, ㄋ-3, ㄋ-6, ㄌ-3, ㄌ-6<br>' +
+                      '<span style="color: green; font-weight: bold;">綠色：</span> ㄉ-5, ㄉ-6, ㄊ-6<br>' +
+                      '<span style="color: yellow; font-weight: bold;" class="highlight-yellow">黃色：</span> ㄉ-3, ㄉ-4, ㄊ-3, ㄊ-4, ㄊ-5',
+                cells: {
+                    'ㄅ-2': 'red', 'ㄆ-1': 'red', 'ㄆ-3': 'red', 'ㄇ-3': 'red', 'ㄈ-3': 'red',
+                    'ㄆ-2': 'black', 'ㄋ-3': 'black', 'ㄋ-6': 'black', 'ㄌ-3': 'black', 'ㄌ-6': 'black',
+                    'ㄉ-5': 'green', 'ㄉ-6': 'green', 'ㄊ-6': 'green',
+                    'ㄉ-3': 'yellow', 'ㄉ-4': 'yellow', 'ㄊ-3': 'yellow', 'ㄊ-4': 'yellow', 'ㄊ-5': 'yellow'
+                }
+            }
+        };
+
+        let currentTask = null;
+
+        function showTask(taskName) {
+            taskButtons.forEach(btn => btn.classList.remove('active'));
+            document.getElementById(taskName).classList.add('active');
+
+            if (tasks[taskName].cells) {
+                currentTask = tasks[taskName].cells;
+            } else {
+                currentTask = null;
+            }
+            currentTaskDiv.innerHTML = tasks[taskName].text;
+        }
+
+        // Create the grid
+        for (let row = 0; row < 15; row++) {
+            for (let col = 0; col < 15; col++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+
+                cell.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    selectedCell = cell;
+                    const rect = cell.getBoundingClientRect();
+                    popup.style.display = 'block';
+                    popup.style.top = `${rect.top + window.scrollY + rect.height}px`;
+                    popup.style.left = `${rect.left + window.scrollX}px`;
+                });
+                grid.appendChild(cell);
+            }
+        }
+
+        popup.addEventListener('click', (event) => {
+            if (event.target.classList.contains('color-button')) {
+                const color = event.target.getAttribute('data-color');
+                if (selectedCell) {
+                    selectedCell.style.backgroundColor = color;
+
+                    const rowLabel = String.fromCharCode('ㄅ'.charCodeAt(0) + parseInt(selectedCell.dataset.row));
+                    const colLabel = parseInt(selectedCell.dataset.col) + 1;
+                    const cellKey = `${rowLabel}-${colLabel}`;
+
+                    if (currentTask && currentTask[cellKey] === color) {
+                        const taskElement = document.querySelector(`[data-cell="${cellKey}"]`);
+                        if (taskElement) {
+                            taskElement.classList.add('correct');
+                        }
+                        delete currentTask[cellKey];
+
+                        if (currentTask && Object.keys(currentTask).length === 0) {
+                            completionMessage.style.display = 'block';
+                        }
+                    }
+                }
+                popup.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!popup.contains(event.target)) {
+                popup.style.display = 'none';
+            }
+        });
+
+        const clearButton = document.getElementById('clearButton');
+        clearButton.addEventListener('click', () => {
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.style.backgroundColor = 'white';
+            });
+            taskButtons.forEach(btn => btn.classList.remove('active'));
+            completionMessage.style.display = 'none';
+            currentTaskDiv.innerHTML = '請選擇題目';
+        });
+    </script>
+</body>
+</html>
