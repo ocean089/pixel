@@ -220,6 +220,20 @@
       font-weight: bold;
       color: #333;
     }
+
+    /* 右下角作者資訊 */
+    .author-info {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      font-size: 16px;
+      color: #444;
+      opacity: 0.7;
+      background-color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
@@ -283,6 +297,11 @@
       完成！恭喜你！<br>
       <button onclick="closeCompletionMessage()">關閉</button>
     </div>
+  </div>
+
+  <!-- 右下角作者資訊 -->
+  <div class="author-info">
+    Made by popoyu
   </div>
 
   <script>
@@ -385,7 +404,6 @@
     createGrid(10);
 
     // ============== 依照不同size計算每格像素大小 ==============
-    // 您可依實際情況自訂公式
     function getCellSize(size) {
       if (size <= 10) return 50;  // 10x10 => 50px
       else if (size <= 15) return 40; // 15x15 => 40px
@@ -407,7 +425,7 @@
       //    第1行(空白) + size行，每行 cellSize px 高度
       rowLabelContainer.style.gridTemplateRows = 
         `40px repeat(${size}, ${cellSize}px)`;  
-      // 最上方那個空白，這裡固定用 40px 或您可改成 cellSize
+      // 最上方那個空白，這裡固定用 40px
       // col-label 則是size列，每列 cellSize px 寬度
       colLabelContainer.style.gridTemplateColumns =
         `repeat(${size}, ${cellSize}px)`;
