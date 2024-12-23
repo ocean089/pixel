@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>小小兵貼地磚 (改版)</title>
+  <style>
+    /* 整體頁面設定 */
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      background-color: #f0f8ff;
+      margin: 0;
+      padding: 20px;
+      font-size: 18px; /* 整體字體放大 */
+    }
+    h1 {
+      color: #333;
+      font-size: 28px; /* 主標題更大 */
+      margin-bottom: 10px;
+    }
+
+    /* 限制整個網頁最大寬度 */
+    .page-wrapper {
+      max-width: 768px;
+      margin: 0 auto;
+    }
+
+    /* 計時器(右上角) */
+    #timer {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      font-size: 18px;
+      color: #444;
+      background-color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      opacity: 0.9;
+      z-index: 2000;
+    }
+
+    /* 上方工具列 */
+    .top-controls {
+      margin-bottom: 20px;
+    }
+    .top-controls label {
+      font-size: 18px;
+    }
+    .top-controls select {
+      font-size: 16px;
+      padding: 5px;
+    }
+    .top-controls button {
+      font-size: 16px;
+      padding: 6px 12px;
+      margin-left: 5px;
+      cursor: pointer;
+    }
+
+    /* 主容器：左側(題目) + 右側(網格與標示) */
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    /* 左側題目 */
+    .task-area {
+      width: 260px; /* 稍微放大 */
+      text-align: left;
+    }
+    .task-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .task-buttons button {
+      padding: 10px 15px;
+      font-size: 18px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .task-buttons button:hover {
+      background-color: #0056b3;
+    }
+    .task-buttons button.active {
+      background-color: red; /* 目前選擇中的題目顯示紅色 */
+    }
+    /* 題目文字字體、行高放大 */
+    #current-task {
+      margin-top: 10px;
+      background-color: #ffffff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      min-height: 120px;
+      font-size: 20px;
+      line-height: 1.8;
+    }
+
+    /* 右側：含 row/col 標示 + 真正的網格 */
+    .grid-container {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+    }
+    .grid-row-label {
+      display: grid;
+    }
+    .grid-row-label span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #333;
+      border-right: 1px solid #aaa;
+    }
+    .grid-col-label {
+      display: grid;
+      justify-items: center;
+      align-items: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 0px;
+    }
+    .grid-col-label span {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-bottom: 1px solid #aaa;
+    }
+
+    /* 網格本體 */
+    .grid {
+      display: grid;
+      border: 2px solid #000;
+      margin: auto;
+    }
+    .cell {
+      border: 1px solid #ccc;
+      background-color: white;
+    }
+    .cell:hover {
+      cursor: pointer;
+      border: 1px solid #000;
+    }
+
+    /* 色盤 */
+    .color-picker-popup {
+      display: none;
+      position: absolute;
+      background-color: #fff;
+      border: 2px solid #000;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+      z-index: 100;
+    }
+    .color-picker-popup .color-button {
+      margin: 5px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: inline-block;
+      cursor: pointer;
+    }
+    .red    { background-color: red; }
+    .yellow { background-color: yellow; }
+    .black  { background-color: black; }
+    .green  { background-color: green; }
+    .blue   { background-color: blue; }
+    .white  { background-color: white; border: 1px dashed #000; }
+
+    /* 完成提示(原本) */
+    #completion-message {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      border: 2px solid #007BFF;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: green;
+      z-index: 1000;
+    }
+    #completion-message button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      color: white;
+      background-color: #007BFF;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #completion-message button:hover {
+      background-color: #0056b3;
+    }
+
+    /* 鼓勵圖案容器(完成時一起顯示)，此處直接以 emoji 文字做示範 */
+    #encouragement-image {
+      margin-top: 15px;
+      font-size: 80px; /* 調整 emoji 大小 */
+      line-height: 1;
+    }
+
+    /* 進度條與數量文字 */
+    .progress-container {
+      margin: 10px auto;
+      width: 220px;
+      height: 25px;
+      border: 2px solid #666;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      background-color: #eee;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: #4caf50;
+      transition: width 0.3s;
+    }
+    #progressText {
+      margin: 5px auto;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    /* 右下角作者資訊 */
+    .author-info {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      font-size: 16px;
+      color: #444;
+      opacity: 0.7;
+      background-color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <!-- 計時器（右上角） -->
+  <div id="timer">已使用時間：0 秒</div>
+
+  <div class="page-wrapper">
+    <h1>小小兵貼地磚</h1>
+
+    <!-- 上方工具 -->
+    <div class="top-controls">
+      <label for="grid-size">選擇格子大小:</label>
+      <select id="grid-size">
+        <option value="10" selected>10x10</option>
+        <option value="15">15x15</option>
+        <option value="20">20x20</option>
+        <option value="25">25x25</option>
+      </select>
+      <button id="set-grid-size">設定大小</button>
+      <button id="clearButton">清除所有格子</button>
+    </div>
+
+    <div class="container">
+      <!-- 左側：題目 -->
+      <div class="task-area">
+        <div class="task-buttons">
+          <button id="自由發揮" onclick="showTask('自由發揮')">自由發揮</button>
+          <button id="第一題" onclick="showTask('第一題')">第一題</button>
+          <button id="第二題" onclick="showTask('第二題')">第二題</button>
+          <button id="第三題" onclick="showTask('第三題')">第三題</button>
+          <button id="第四題" onclick="showTask('第四題')">第四題</button>
+        </div>
+        <div id="current-task">請選擇題目</div>
+
+        <!-- 進度文字 + 進度條 -->
+        <div id="progressText">0 / 0</div>
+        <div class="progress-container">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+      </div>
+
+      <!-- 右側：row/col 標籤 + 網格 -->
+      <div class="grid-container">
+        <div class="grid-row-label" id="row-label"></div>
+        <div>
+          <div class="grid-col-label" id="col-label"></div>
+          <div class="grid" id="grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 色盤 -->
+    <div id="popup" class="color-picker-popup">
+      <div class="color-button red"    data-color="red"></div>
+      <div class="color-button yellow" data-color="yellow"></div>
+      <div class="color-button black"  data-color="black"></div>
+      <div class="color-button green"  data-color="green"></div>
+      <div class="color-button blue"   data-color="blue"></div>
+      <div class="color-button white"  data-color="white"></div>
+    </div>
+
+    <!-- 完成提示 -->
+    <div id="completion-message">
+      完成！恭喜你！<br>
+      <button onclick="closeCompletionMessage()">關閉</button>
+      <!-- 鼓勵圖案 (大型的讚emoji) -->
+      <div id="encouragement-image">👍</div>
+    </div>
+  </div>
+
+  <!-- 右下角作者資訊 -->
+  <div class="author-info">
+    By popoyu ｜題目參考自「從遊戲中學編碼」王啓仲、柯丁書籍
+  </div>
+
+  <script>
+    // ============== 全域變數 ==============
+    const grid              = document.getElementById('grid');
+    const popup             = document.getElementById('popup');
+    const completionMessage = document.getElementById('completion-message');
+    const currentTaskDiv    = document.getElementById('current-task');
+    const taskButtons       = document.querySelectorAll('.task-buttons button');
+    const clearButton       = document.getElementById('clearButton');
+    const gridSizeSelect    = document.getElementById('grid-size');
+    const setGridSizeButton = document.getElementById('set-grid-size');
+    const rowLabelContainer = document.getElementById('row-label');
+    const colLabelContainer = document.getElementById('col-label');
+    const progressText      = document.getElementById('progressText');
+    const progressBar       = document.getElementById('progressBar');
+    const timerDiv          = document.getElementById('timer');
+
+    // 計時相關
+    let timeElapsed    = 0;   // 已用秒數
+    let timerInterval  = null;
+    let isCompleted    = false; // 是否已經完成
+
+    // 注音符號（最多25個對應25×25）
+    const zhuyinLabels = [
+      "ㄅ","ㄆ","ㄇ","ㄈ","ㄉ","ㄊ","ㄋ","ㄌ","ㄍ",
+      "ㄎ","ㄏ","ㄐ","ㄑ","ㄒ","ㄓ","ㄔ","ㄕ","ㄖ","ㄗ","ㄘ","ㄙ",
+      "ㄚ","ㄛ","ㄜ","ㄝ"
+    ];
+
+    // 題目定義
+    const tasks = {
+      '自由發揮': {
+        text: '自由發揮：請自由創作！',
+        cells: {}
+      },
+      '第一題': {
+        text: `
+          <span style="color: red;">紅色</span>：ㄇ-2，ㄇ-4，ㄈ-1，ㄈ-3，ㄈ-5<br>
+          <span style="color: black;">黑色</span>：ㄋ-3<br>
+          <span style="color: green;">綠色</span>：ㄉ-1，ㄉ-5，ㄊ-2，ㄊ-4
+        `,
+        cells: {
+          'ㄇ-2': 'red',
+          'ㄇ-4': 'red',
+          'ㄈ-1': 'red',
+          'ㄈ-3': 'red',
+          'ㄈ-5': 'red',
+          'ㄋ-3': 'black',
+          'ㄉ-1': 'green',
+          'ㄉ-5': 'green',
+          'ㄊ-2': 'green',
+          'ㄊ-4': 'green'
+        }
+      },
+      '第二題': {
+        text: `
+          <span style="color: red;">紅色</span>: ㄉ-2, ㄊ-2, ㄊ-4, ㄋ-3<br>
+          <span style="background-color: black; color: yellow;">黃色</span>: ㄅ-4, ㄆ-4, ㄆ-5, ㄇ-4, ㄇ-6<br>
+          <span style="color: blue;">藍色</span>: ㄈ-3, ㄈ-4, ㄉ-3, ㄉ-4, ㄊ-3
+        `,
+        cells: {
+          'ㄉ-2': 'red', 'ㄊ-2': 'red', 'ㄊ-4': 'red', 'ㄋ-3': 'red',
+          'ㄅ-4': 'yellow', 'ㄆ-4': 'yellow', 'ㄆ-5': 'yellow', 'ㄇ-4': 'yellow', 'ㄇ-6': 'yellow',
+          'ㄈ-3': 'blue', 'ㄈ-4': 'blue', 'ㄉ-3': 'blue', 'ㄉ-4': 'blue', 'ㄊ-3': 'blue'
+        }
+      },
+      '第三題': {
+        text: `
+          <span style="color: red;">紅色</span>: ㄅ-2，ㄆ-1，ㄆ-3，ㄇ-3，ㄈ-3<br>
+          <span style="color: black;">黑色</span>: ㄆ-2，ㄋ-3，ㄋ-6，ㄌ-3，ㄌ-6<br>
+          <span style="color: green;">綠色</span>: ㄉ-5，ㄉ-6，ㄊ-6<br>
+          <span style="background-color: black; color: yellow;">黃色</span>: ㄉ-3，ㄉ-4，ㄊ-3，ㄊ-4，ㄊ-5
+        `,
+        cells: {
+          'ㄅ-2': 'red', 'ㄆ-1': 'red', 'ㄆ-3': 'red', 'ㄇ-3': 'red', 'ㄈ-3': 'red',
+          'ㄆ-2': 'black', 'ㄋ-3': 'black', 'ㄋ-6': 'black', 'ㄌ-3': 'black', 'ㄌ-6': 'black',
+          'ㄉ-5': 'green', 'ㄉ-6': 'green', 'ㄊ-6': 'green',
+          'ㄉ-3': 'yellow', 'ㄉ-4': 'yellow', 'ㄊ-3': 'yellow', 'ㄊ-4': 'yellow', 'ㄊ-5': 'yellow'
+        }
+      },
+      '第四題': {
+        text: `
+          <span style="color: red;">紅色</span>: ㄇ-2，ㄇ-4，ㄉ-2，ㄉ-4<br>
+          <span style="color: blue;">藍色</span>: ㄈ-3，ㄊ-3，ㄋ-3，ㄌ-3<br>
+          <span style="color: green;">綠色</span>: ㄊ-6，ㄋ-1，ㄋ-5，ㄌ-2，ㄌ-4<br>
+          <span style="background-color: black; color: yellow;">黃色</span>: ㄇ-3，ㄈ-2，ㄈ-4，ㄉ-3
+        `,
+        cells: {
+          'ㄇ-2': 'red', 'ㄇ-4': 'red', 'ㄉ-2': 'red', 'ㄉ-4': 'red',
+          'ㄈ-3': 'blue', 'ㄊ-3': 'blue', 'ㄋ-3': 'blue', 'ㄌ-3': 'blue',
+          'ㄊ-6': 'green', 'ㄋ-1': 'green', 'ㄋ-5': 'green', 'ㄌ-2': 'green', 'ㄌ-4': 'green',
+          'ㄇ-3': 'yellow', 'ㄈ-2': 'yellow', 'ㄈ-4': 'yellow', 'ㄉ-3': 'yellow'
+        }
+      }
+    };
+
+    // 保留這兩個計數器用來更新進度條
+    let completedCount = 0;
+    let totalRequired  = 0;
+
+    // 為了記錄目前選到哪個題目
+    let currentTaskName = '';
+
+    // 用來儲存「每個格子」的目前顏色 (二維陣列)
+    let cellColors = [];
+
+    // 用來暫存被點擊的 cell
+    let selectedCell = null;
+
+    // ============== 預設建立 10×10 + 初始化 ==============
+    createGrid(10);
+    // 頁面載入後就開始計時
+    startTimer();
+
+    // ============== 建立網格 + row/col標籤 ==============
+    function createGrid(size) {
+      // 1) 先清空畫面
+      rowLabelContainer.innerHTML = '';
+      colLabelContainer.innerHTML = '';
+      grid.innerHTML = '';
+
+      // 2) 初始化 cellColors (二維，預設全部 white)
+      cellColors = Array.from({ length: size }, () =>
+        Array.from({ length: size }, () => 'white')
+      );
+
+      // 3) 根據 size 計算 cellSize
+      const cellSize = getCellSize(size);
+
+      // 4) 動態設定 row-label (最上方空白 + size行)
+      rowLabelContainer.style.gridTemplateRows =
+        `40px repeat(${size}, ${cellSize}px)`;
+
+      // col-label
+      colLabelContainer.style.gridTemplateColumns =
+        `repeat(${size}, ${cellSize}px)`;
+
+      const blankSpan = document.createElement('span');
+      blankSpan.textContent = '';
+      blankSpan.style.height = "40px";
+      rowLabelContainer.appendChild(blankSpan);
+
+      for (let r = 0; r < size; r++) {
+        const span = document.createElement('span');
+        span.textContent = zhuyinLabels[r] || '?';
+        span.style.width  = cellSize + "px";
+        span.style.height = cellSize + "px";
+        rowLabelContainer.appendChild(span);
+      }
+
+      // 5) 建立 col 標籤(1 ~ size)
+      for (let c = 0; c < size; c++) {
+        const span = document.createElement('span');
+        span.textContent = c+1;
+        span.style.width  = cellSize + "px";
+        span.style.height = "40px";
+        colLabelContainer.appendChild(span);
+      }
+
+      // 6) 設定 grid (size×size)
+      grid.style.gridTemplateColumns = `repeat(${size}, ${cellSize}px)`;
+      grid.style.gridTemplateRows    = `repeat(${size}, ${cellSize}px)`;
+
+      // 7) 生成 cells
+      for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          cell.style.width  = cellSize + "px";
+          cell.style.height = cellSize + "px";
+          cell.dataset.row = row;
+          cell.dataset.col = col;
+
+          // 點擊格子 => 彈出色盤
+          cell.addEventListener('click', (event) => {
+            event.stopPropagation();
+            selectedCell = cell;
+            const rect = cell.getBoundingClientRect();
+            popup.style.display = 'block';
+            popup.style.top  = `${rect.top + window.scrollY + rect.height}px`;
+            popup.style.left = `${rect.left + window.scrollX}px`;
+          });
+
+          grid.appendChild(cell);
+        }
+      }
+    }
+
+    // ============== 依照不同 size 計算每格像素大小 ==============
+    function getCellSize(size) {
+      if (size <= 10) return 50;
+      else if (size <= 15) return 40;
+      else if (size <= 20) return 30;
+      else return 25;
+    }
+
+    // ============== 點擊色盤選色，更新 cellColors + 重新計算題目進度 ==============
+    popup.addEventListener('click', (event) => {
+      if (event.target.classList.contains('color-button')) {
+        const color = event.target.dataset.color;
+        if (selectedCell) {
+          const rowIndex = parseInt(selectedCell.dataset.row);
+          const colIndex = parseInt(selectedCell.dataset.col);
+
+          // 1) 更新 cellColors
+          cellColors[rowIndex][colIndex] = color;
+
+          // 2) 更新格子背景
+          selectedCell.style.backgroundColor = color;
+
+          // 3) 重新計算當前題目完成度 + 更新文字
+          updateProgressAndTaskText();
+        }
+        popup.style.display = 'none';
+      }
+    });
+
+    // ============== 進度條更新 ==============
+    function updateProgressBar() {
+      progressText.textContent = `${completedCount} / ${totalRequired}`;
+      let percent = 0;
+      if (totalRequired > 0) {
+        percent = (completedCount / totalRequired) * 100;
+      }
+      progressBar.style.width = percent + '%';
+    }
+
+    // ============== 切換題目 ==============
+    function showTask(taskName) {
+      // 1) UI上的按鈕狀態
+      taskButtons.forEach(btn => btn.classList.remove('active'));
+      document.getElementById(taskName).classList.add('active');
+
+      // 2) 更新全域變數
+      currentTaskName = taskName;
+
+      // 3) 顯示該題目的說明
+      currentTaskDiv.innerHTML = tasks[taskName].text;
+
+      // 4) 重新計算完成度，並更新文字顯示
+      updateProgressAndTaskText();
+    }
+
+    // ============== 核心：動態計算哪些格子顏色正確，更新進度與文字 ==============
+    function updateProgressAndTaskText() {
+      // 如果還沒選題目，就不用做
+      if (!currentTaskName) return;
+
+      const taskObj = tasks[currentTaskName];
+      const requiredMap = taskObj.cells;  // { 'ㄇ-2': 'red', 'ㄇ-4': 'red', ... }
+      const total = Object.keys(requiredMap).length;
+
+      // 1) 計算完成度
+      let correctCount = 0;
+      Object.entries(requiredMap).forEach(([label, requiredColor]) => {
+        const { row, col } = parseLabel(label);
+        if (
+          cellColors[row] &&
+          cellColors[row][col] === requiredColor
+        ) {
+          correctCount++;
+        }
+      });
+
+      completedCount = correctCount;
+      totalRequired  = total;
+
+      // 2) 產生新的題目文字 (把「正確」的 label 顯示灰色 + 刪除線)
+      let newHTML = taskObj.text;
+      Object.entries(requiredMap).forEach(([label, requiredColor]) => {
+        const { row, col } = parseLabel(label);
+        if (cellColors[row] && cellColors[row][col] === requiredColor) {
+          newHTML = newHTML.replace(
+            new RegExp(label, 'g'),
+            `<span style="color: gray; text-decoration: line-through;">${label}</span>`
+          );
+        }
+      });
+      currentTaskDiv.innerHTML = newHTML;
+
+      // 3) 更新進度條
+      updateProgressBar();
+
+      // 4) 如果全部完成 => 顯示完成提示 + 停止計時
+      if (correctCount === total && total > 0) {
+        isCompleted = true; // 表示已完成
+        completionMessage.style.display = 'block';
+        stopTimer(); // 停止計時
+      } else {
+        completionMessage.style.display = 'none';
+      }
+    }
+
+    // ============== 工具：把 'ㄇ-2' 轉成 row=2, col=1 ==============
+    function parseLabel(label) {
+      const [zhuyin, numString] = label.split('-');
+      const row = zhuyinLabels.indexOf(zhuyin);
+      const col = parseInt(numString, 10) - 1;
+      return { row, col };
+    }
+
+    // ============== 點擊別處關閉色盤 ==============
+    document.addEventListener('click', (event) => {
+      if (!popup.contains(event.target)) {
+        popup.style.display = 'none';
+      }
+    });
+
+    // ============== 「設定大小」按鈕 ==============
+    setGridSizeButton.addEventListener('click', () => {
+      const size = parseInt(gridSizeSelect.value);
+      createGrid(size);
+      // 切換到新網格後，如果有選題目，就重算
+      updateProgressAndTaskText();
+      completionMessage.style.display = 'none';
+      isCompleted = false;
+      // 重置並重新開始計時
+      resetTimer();
+      startTimer();
+    });
+
+    // ============== 「清除所有格子」按鈕 ==============
+    clearButton.addEventListener('click', () => {
+      document.querySelectorAll('.cell').forEach(cell => {
+        cell.style.backgroundColor = 'white';
+      });
+      // cellColors 也全部還原
+      cellColors.forEach((rowArr) => rowArr.fill('white'));
+
+      completionMessage.style.display = 'none';
+      isCompleted = false;
+      // 重算
+      updateProgressAndTaskText();
+      // 重新開始計時
+      resetTimer();
+      startTimer();
+    });
+
+    // ============== 關閉完成提示 ==============
+    function closeCompletionMessage() {
+      completionMessage.style.display = 'none';
+    }
+
+    // ============== 計時器相關：開始/停止/重置 ==============
+    function startTimer() {
+      // 若已經完成，就不要再開啟計時
+      if (isCompleted) return;
+      timerInterval = setInterval(() => {
+        timeElapsed++;
+        timerDiv.textContent = `已使用時間：${timeElapsed} 秒`;
+      }, 1000);
+    }
+    function stopTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    function resetTimer() {
+      stopTimer();
+      timeElapsed = 0;
+      timerDiv.textContent = `已使用時間：0 秒`;
+    }
+  </script>
+</body>
+</html>
