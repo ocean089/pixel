@@ -1,39 +1,34 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>一筆畫遊戲（點放大 + 即時畫線）</title>
+  <title>一筆畫遊戲</title>
   <style>
     body {
       font-family: "Arial", sans-serif;
-      text-align: center;
       background-color: #fef6e4;
       margin: 0;
       padding: 0;
+      text-align: center;
     }
-
     #home, #game, #result {
       display: none;
       padding: 20px;
     }
-
     .active {
       display: block !important;
     }
-
     button {
-      font-size: 1.4rem;
-      padding: 16px 32px;
-      margin: 20px;
+      font-size: 1.2rem;
+      padding: 12px 24px;
+      margin: 12px;
       border: none;
       border-radius: 10px;
       background-color: #f582ae;
       color: white;
       cursor: pointer;
     }
-
     canvas {
       background-color: #fff;
       border: 2px solid #8bd3dd;
@@ -42,29 +37,24 @@
       height: auto;
       touch-action: none;
     }
-
     #title {
       font-size: 1.6rem;
       font-weight: bold;
       margin-top: 10px;
     }
-
     #instructions {
       font-size: 1.1rem;
       margin-bottom: 10px;
     }
-
     #timer {
       font-size: 1.3rem;
       color: #333;
     }
-
     #result h2 {
       font-size: 2rem;
       color: #f582ae;
       animation: pop 1s ease-in-out infinite alternate;
     }
-
     @keyframes pop {
       from { transform: scale(1); }
       to { transform: scale(1.1); }
@@ -72,49 +62,647 @@
   </style>
 </head>
 <body>
-
 <div id="home" class="active">
-  <h1 style="font-size: 2rem; margin-top: 40px;">一筆畫遊戲</h1>
-  <button onclick="startGame()">第一題：三角形</button>
+  <h1 style="font-size: 2rem; margin-top: 30px;">一筆畫遊戲</h1>
+  <p>請選擇關卡開始挑戰：</p>
+  <div id="levelButtons"></div>
 </div>
-
 <div id="game">
-  <div id="title">第1關：畫出三角形</div>
+  <div id="title"></div>
   <div id="instructions">請用手指從一點滑到另一點來畫線，不能重複喔！</div>
   <div id="timer">時間：00:00</div>
   <canvas id="gameCanvas" width="400" height="400"></canvas>
   <br />
   <button onclick="resetGame()">重新開始</button>
 </div>
-
 <div id="result">
   <h2>完成了！</h2>
   <p id="timeUsed"></p>
+  <div id="stars" style="font-size: 2rem; color: gold; margin-top: 1rem;"></div>
   <button onclick="goHome()">回首頁</button>
-  <button onclick="startGame()">下一關</button>
+  <button onclick="nextLevel()">下一關</button>
 </div>
-
+<audio id="successSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_e8cd8b6a08.mp3"></audio>
+<audio id="failSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_20684fce18.mp3"></audio>
 <script>
+// === LEVEL DATA ===
+const LEVELS = [
+  {
+    "name": "\u4e09\u89d2\u5f62",
+    "points": [
+      [
+        0.5,
+        0.1
+      ],
+      [
+        0.2,
+        0.8
+      ],
+      [
+        0.8,
+        0.8
+      ]
+    ],
+    "lines": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        0
+      ]
+    ]
+  },
+  {
+    "name": "\u6b63\u65b9\u5f62",
+    "points": [
+      [
+        0.2,
+        0.2
+      ],
+      [
+        0.8,
+        0.2
+      ],
+      [
+        0.8,
+        0.8
+      ],
+      [
+        0.2,
+        0.8
+      ]
+    ],
+    "lines": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        0
+      ]
+    ]
+  },
+  {
+    "name": "\u661f\u5f62",
+    "points": [
+      [
+        0.5,
+        0.1
+      ],
+      [
+        0.6,
+        0.4
+      ],
+      [
+        0.9,
+        0.4
+      ],
+      [
+        0.65,
+        0.6
+      ],
+      [
+        0.75,
+        0.9
+      ],
+      [
+        0.5,
+        0.7
+      ],
+      [
+        0.25,
+        0.9
+      ],
+      [
+        0.35,
+        0.6
+      ],
+      [
+        0.1,
+        0.4
+      ],
+      [
+        0.4,
+        0.4
+      ]
+    ],
+    "lines": [
+      [
+        0,
+        3
+      ],
+      [
+        3,
+        6
+      ],
+      [
+        6,
+        1
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        4,
+        7
+      ],
+      [
+        7,
+        2
+      ],
+      [
+        2,
+        5
+      ],
+      [
+        5,
+        8
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        9,
+        0
+      ]
+    ]
+  },
+  {
+    "name": "\u623f\u5b50",
+    "points": [
+      [
+        0.2,
+        0.8
+      ],
+      [
+        0.8,
+        0.8
+      ],
+      [
+        0.8,
+        0.4
+      ],
+      [
+        0.2,
+        0.4
+      ],
+      [
+        0.5,
+        0.1
+      ]
+    ],
+    "lines": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        4,
+        2
+      ]
+    ]
+  },
+  {
+    "name": "\u4fe1\u5c01",
+    "points": [
+      [
+        0.2,
+        0.2
+      ],
+      [
+        0.8,
+        0.2
+      ],
+      [
+        0.8,
+        0.8
+      ],
+      [
+        0.2,
+        0.8
+      ],
+      [
+        0.5,
+        0.5
+      ]
+    ],
+    "lines": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        3,
+        4
+      ]
+    ]
+  },
+  {
+    "name": "\u947d\u77f3",
+    "points": [
+      [
+        0.5,
+        0.1
+      ],
+      [
+        0.9,
+        0.5
+      ],
+      [
+        0.5,
+        0.9
+      ],
+      [
+        0.1,
+        0.5
+      ],
+      [
+        0.5,
+        0.5
+      ]
+    ],
+    "lines": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        3,
+        4
+      ]
+    ]
+  },
+  {
+    "name": "\u5169\u5c71\u5f62",
+    "points": [
+      [
+        0.1,
+        0.8
+      ],
+      [
+        0.3,
+        0.4
+      ],
+      [
+        0.5,
+        0.8
+      ],
+      [
+        0.7,
+        0.4
+      ],
+      [
+        0.9,
+        0.8
+      ]
+    ],
+    "lines": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        4
+      ]
+    ]
+  },
+  {
+    "name": "\u4e95\u5b57\u683c",
+    "points": [
+      [
+        0.3,
+        0.1
+      ],
+      [
+        0.3,
+        0.9
+      ],
+      [
+        0.5,
+        0.1
+      ],
+      [
+        0.5,
+        0.9
+      ],
+      [
+        0.7,
+        0.1
+      ],
+      [
+        0.7,
+        0.9
+      ],
+      [
+        0.1,
+        0.3
+      ],
+      [
+        0.9,
+        0.3
+      ],
+      [
+        0.1,
+        0.5
+      ],
+      [
+        0.9,
+        0.5
+      ],
+      [
+        0.1,
+        0.7
+      ],
+      [
+        0.9,
+        0.7
+      ]
+    ],
+    "lines": [
+      [
+        0,
+        1
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        4,
+        5
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        10,
+        11
+      ]
+    ]
+  },
+  {
+    "name": "\u9f9c\u6bbc",
+    "points": [
+      [
+        0.5,
+        0.1
+      ],
+      [
+        0.9,
+        0.3
+      ],
+      [
+        0.9,
+        0.7
+      ],
+      [
+        0.5,
+        0.9
+      ],
+      [
+        0.1,
+        0.7
+      ],
+      [
+        0.1,
+        0.3
+      ],
+      [
+        0.5,
+        0.5
+      ]
+    ],
+    "lines": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        4,
+        5
+      ],
+      [
+        5,
+        0
+      ],
+      [
+        0,
+        6
+      ],
+      [
+        1,
+        6
+      ],
+      [
+        2,
+        6
+      ],
+      [
+        3,
+        6
+      ],
+      [
+        4,
+        6
+      ],
+      [
+        5,
+        6
+      ]
+    ]
+  },
+  {
+    "name": "\u9583\u96fb",
+    "points": [
+      [
+        0.2,
+        0.1
+      ],
+      [
+        0.5,
+        0.1
+      ],
+      [
+        0.4,
+        0.4
+      ],
+      [
+        0.7,
+        0.4
+      ],
+      [
+        0.3,
+        0.9
+      ],
+      [
+        0.6,
+        0.9
+      ]
+    ],
+    "lines": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        4,
+        5
+      ]
+    ]
+  }
+];
+
+// === GAME LOGIC ===
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-
+let currentLevel = 0;
 let drawnLines = [];
 let startPointIndex = null;
 let hoverPointIndex = null;
 let startTime = null;
-let timerInterval;
+let timerInterval = null;
+let allowDraw = true;
 
-const points = [
-  { x: 0.5, y: 0.2 },
-  { x: 0.2, y: 0.8 },
-  { x: 0.8, y: 0.8 }
-];
+function showScreen(id) {
+  document.querySelectorAll("div").forEach(d => d.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
 
-let lines = [
-  [0, 1],
-  [1, 2],
-  [2, 0]
-];
+function goHome() {
+  showScreen("home");
+  renderLevelButtons();
+}
+
+function renderLevelButtons() {
+  const container = document.getElementById("levelButtons");
+  container.innerHTML = "";
+  LEVELS.forEach((level, index) => {
+    const btn = document.createElement("button");
+    btn.textContent = `第${index + 1}關：${level.name}`;
+    btn.onclick = () => startLevel(index);
+    container.appendChild(btn);
+  });
+}
 
 function resizeCanvas() {
   const size = Math.min(window.innerWidth * 0.9, 400);
@@ -123,67 +711,64 @@ function resizeCanvas() {
   draw();
 }
 
-function showScreen(id) {
-  document.querySelectorAll("div").forEach(d => d.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-}
-
-function startGame() {
+function startLevel(levelIndex) {
+  currentLevel = levelIndex;
   drawnLines = [];
   startPointIndex = null;
   hoverPointIndex = null;
+  allowDraw = true;
   clearInterval(timerInterval);
   document.getElementById("timer").textContent = "時間：00:00";
   startTime = null;
+  document.getElementById("title").textContent = `第${levelIndex + 1}關：${LEVELS[levelIndex].name}`;
   showScreen("game");
   resizeCanvas();
 }
 
 function resetGame() {
-  drawnLines = [];
-  startPointIndex = null;
-  hoverPointIndex = null;
-  clearInterval(timerInterval);
-  document.getElementById("timer").textContent = "時間：00:00";
-  startTime = null;
-  draw();
+  startLevel(currentLevel);
 }
 
-function goHome() {
-  showScreen("home");
+function nextLevel() {
+  if (currentLevel + 1 < LEVELS.length) {
+    startLevel(currentLevel + 1);
+  } else {
+    goHome();
+  }
 }
 
 function draw() {
   const w = canvas.width;
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
+  const level = LEVELS[currentLevel];
+  const pts = level.points;
 
-  // draw guide lines
+  // 底線
   ctx.strokeStyle = "#ccc";
   ctx.lineWidth = 2;
-  lines.forEach(([a, b]) => {
+  level.lines.forEach(([a,b]) => {
     ctx.beginPath();
-    ctx.moveTo(points[a].x * w, points[a].y * h);
-    ctx.lineTo(points[b].x * w, points[b].y * h);
+    ctx.moveTo(pts[a][0]*w, pts[a][1]*h);
+    ctx.lineTo(pts[b][0]*w, pts[b][1]*h);
     ctx.stroke();
   });
 
-  // draw user drawn lines
+  // 已畫線
   ctx.strokeStyle = "#f582ae";
   ctx.lineWidth = 4;
-  drawnLines.forEach(([a, b]) => {
+  drawnLines.forEach(([a,b]) => {
     ctx.beginPath();
-    ctx.moveTo(points[a].x * w, points[a].y * h);
-    ctx.lineTo(points[b].x * w, points[b].y * h);
+    ctx.moveTo(pts[a][0]*w, pts[a][1]*h);
+    ctx.lineTo(pts[b][0]*w, pts[b][1]*h);
     ctx.stroke();
   });
 
-  // draw points with highlight
-  points.forEach((p, i) => {
+  // 點
+  pts.forEach((p, i) => {
     ctx.beginPath();
-    let radius = 10;
-    if (i === hoverPointIndex || i === startPointIndex) radius = 14;
-    ctx.arc(p.x * w, p.y * h, radius, 0, Math.PI * 2);
+    const r = (i === startPointIndex || i === hoverPointIndex) ? 14 : 10;
+    ctx.arc(p[0]*w, p[1]*h, r, 0, Math.PI*2);
     ctx.fillStyle = "#8bd3dd";
     ctx.fill();
     ctx.strokeStyle = "#f582ae";
@@ -193,19 +778,21 @@ function draw() {
 }
 
 function getPointIndex(x, y) {
+  const pts = LEVELS[currentLevel].points;
   const w = canvas.width;
   const h = canvas.height;
-  for (let i = 0; i < points.length; i++) {
-    const px = points[i].x * w;
-    const py = points[i].y * h;
+  for (let i = 0; i < pts.length; i++) {
+    const px = pts[i][0]*w;
+    const py = pts[i][1]*h;
     const dx = px - x;
     const dy = py - y;
-    if (dx * dx + dy * dy < 400) return i;
+    if (dx*dx + dy*dy < 400) return i;
   }
   return null;
 }
 
 canvas.addEventListener("touchstart", (e) => {
+  if (!allowDraw) return;
   e.preventDefault();
   const rect = canvas.getBoundingClientRect();
   const touch = e.touches[0];
@@ -222,21 +809,12 @@ canvas.addEventListener("touchstart", (e) => {
 });
 
 canvas.addEventListener("touchmove", (e) => {
-  if (startPointIndex === null) return;
+  if (!allowDraw || startPointIndex === null) return;
   const rect = canvas.getBoundingClientRect();
   const touch = e.touches[0];
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
-  
   hoverPointIndex = getPointIndex(x, y);
-
-  // 如果有效且未畫過，畫線（即時畫線）
-  if (hoverPointIndex !== null && hoverPointIndex !== startPointIndex) {
-    tryDrawLine(startPointIndex, hoverPointIndex);
-    startPointIndex = hoverPointIndex;
-    hoverPointIndex = null;
-  }
-
   draw();
 
   if (hoverPointIndex !== null && hoverPointIndex !== startPointIndex) {
@@ -246,56 +824,56 @@ canvas.addEventListener("touchmove", (e) => {
   }
 });
 
-
 canvas.addEventListener("touchend", () => {
-  // 如果還沒畫完就結束，視為失敗
-  if (drawnLines.length < lines.length) {
+  if (!allowDraw) return;
+  if (drawnLines.length < LEVELS[currentLevel].lines.length) {
     alert("Oops! 要一筆畫完成，不能抬起手喔！");
     resetGame();
-    return;
   }
-
   startPointIndex = null;
   hoverPointIndex = null;
   draw();
 });
 
 function tryDrawLine(a, b) {
-  const valid = lines.some(l =>
-    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a)
-  );
-  const exists = drawnLines.some(dl =>
-    (dl[0] === a && dl[1] === b) || (dl[0] === b && dl[1] === a)
-  );
-
+  const level = LEVELS[currentLevel];
+  const valid = level.lines.some(l =>
+    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
+  const exists = drawnLines.some(l =>
+    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
   if (valid && !exists) {
-    drawnLines.push([a, b]);
+    drawnLines.push([a,b]);
     draw();
-
-    if (drawnLines.length === lines.length) {
+    if (drawnLines.length === level.lines.length) {
+      allowDraw = false;
       clearInterval(timerInterval);
-      const usedTime = Date.now() - startTime;
-      const minutes = Math.floor(usedTime / 60000);
-      const seconds = Math.floor((usedTime % 60000) / 1000);
-      document.getElementById("timeUsed").textContent =
-        `你用了 ${minutes} 分 ${seconds} 秒完成這一關！`;
-      showScreen("result");
+      setTimeout(() => {
+        const used = Date.now() - startTime;
+        const min = Math.floor(used / 60000);
+        const sec = Math.floor((used % 60000) / 1000);
+        document.getElementById("timeUsed").textContent =
+          `你用了 ${min} 分 ${sec} 秒完成這一關！`;
+        showScreen("result");
+      }, 1000);
     }
   }
 }
 
 function updateTimer() {
   const elapsed = Date.now() - startTime;
-  const minutes = Math.floor(elapsed / 60000);
-  const seconds = Math.floor((elapsed % 60000) / 1000);
-  document.getElementById("timer").textContent = `時間：${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  const min = Math.floor(elapsed / 60000);
+  const sec = Math.floor((elapsed % 60000) / 1000);
+  document.getElementById("timer").textContent = `時間：${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 
 window.onload = () => {
-  showScreen("home");
+  goHome();
   resizeCanvas();
 };
 </script>
+</body>
+</html>
 
+</script>
 </body>
 </html>
