@@ -65,7 +65,14 @@
 <div id="home" class="active">
   <h1 style="font-size: 2rem; margin-top: 30px;">一筆畫遊戲</h1>
   <p>請選擇關卡開始挑戰：</p>
-  <div id="levelButtons"></div>
+  <button onclick="showRecords()">老師查看紀錄</button><br><div id="levelButtons"></div>
+<div id="records" style="display: none; padding: 20px;">
+  <h2>學生成績查詢</h2>
+  <canvas id="chartCanvas" width="350" height="300" style="border:1px solid #ccc;"></canvas>
+  <br>
+  <button onclick="goHome()">回首頁</button>
+</div>
+
 </div>
 <div id="game">
   <div id="title"></div>
@@ -1103,6 +1110,46 @@ function tryDrawLine(a, b) {
   }
 }
 
+function speak(text) {
+  if ('speechSynthesis' in window) {
+    const utter = new SpeechSynthesisUtterance(text);
+    speechSynthesis.speak(utter);
+  }
+}
+
+function showRecords() {
+  showScreen("records");
+  drawChart();
+}
+
+function drawChart() {
+  const canvas = document.getElementById("chartCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const data = JSON.parse(localStorage.getItem("results") || "[]");
+
+  // Draw X axis labels (levels)
+  for (let i = 0; i < LEVELS.length; i++) {
+    const x = 20 + i * 20;
+    ctx.fillStyle = "#333";
+    ctx.fillText(i + 1, x, 290);
+  }
+
+  // Draw bars (height = time, color = stars)
+  for (let i = 0; i < LEVELS.length; i++) {
+    const d = data[i];
+    if (!d || !d.passed) continue;
+    const timeSec = Math.floor(d.time / 1000);
+    const stars = (timeSec <= 5) ? 3 : (timeSec <= 10) ? 2 : 1;
+    const barHeight = Math.min(200, timeSec * 5);
+    const x = 20 + i * 20;
+    const y = 280 - barHeight;
+
+    ctx.fillStyle = stars === 3 ? "#ffd700" : stars === 2 ? "#fbb034" : "#ff4d4d";
+    ctx.fillRect(x, y, 10, barHeight);
+  }
+}
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 let currentLevel = 0;
@@ -1150,7 +1197,11 @@ function startLevel(levelIndex) {
   clearInterval(timerInterval);
   document.getElementById("timer").textContent = "時間：00:00";
   startTime = null;
-  document.getElementById("title").textContent = `第${levelIndex + 1}關：${LEVELS[levelIndex].name}`;
+  
+  const levelName = LEVELS[levelIndex].name;
+  document.getElementById("title").textContent = `第${levelIndex + 1}關：${levelName}`;
+  speak(`第${levelIndex + 1}關，${levelName}，請一筆畫完成`);
+
   showScreen("game");
   resizeCanvas();
 }
