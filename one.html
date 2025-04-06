@@ -85,7 +85,6 @@
 <audio id="successSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_e8cd8b6a08.mp3"></audio>
 <audio id="failSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_20684fce18.mp3"></audio>
 <script>
-// === LEVEL DATA ===
 const LEVELS = [
   {
     "name": "\u4e09\u89d2\u5f62",
@@ -158,26 +157,26 @@ const LEVELS = [
     ]
   },
   {
-    "name": "\u661f\u5f62",
+    "name": "\u4e94\u8292\u661f",
     "points": [
       [
         0.5,
         0.1
       ],
       [
-        0.6,
-        0.4
+        0.65,
+        0.35
       ],
       [
         0.9,
         0.4
       ],
       [
-        0.65,
+        0.7,
         0.6
       ],
       [
-        0.75,
+        0.8,
         0.9
       ],
       [
@@ -185,11 +184,11 @@ const LEVELS = [
         0.7
       ],
       [
-        0.25,
+        0.2,
         0.9
       ],
       [
-        0.35,
+        0.3,
         0.6
       ],
       [
@@ -197,17 +196,17 @@ const LEVELS = [
         0.4
       ],
       [
-        0.4,
-        0.4
+        0.35,
+        0.35
       ]
     ],
     "lines": [
       [
         0,
-        3
+        2
       ],
       [
-        3,
+        2,
         6
       ],
       [
@@ -216,30 +215,10 @@ const LEVELS = [
       ],
       [
         1,
-        4
-      ],
-      [
-        4,
         7
       ],
       [
         7,
-        2
-      ],
-      [
-        2,
-        5
-      ],
-      [
-        5,
-        8
-      ],
-      [
-        8,
-        9
-      ],
-      [
-        9,
         0
       ]
     ]
@@ -671,8 +650,6 @@ const LEVELS = [
   }
 ];
 
-// === GAME LOGIC ===
-
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 let currentLevel = 0;
@@ -835,7 +812,33 @@ canvas.addEventListener("touchend", () => {
   draw();
 });
 
+
 function tryDrawLine(a, b) {
+  const level = LEVELS[currentLevel];
+  const valid = level.lines.some(l =>
+    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
+  const exists = drawnLines.some(l =>
+    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
+  if (!valid || exists) return; // 阻止重複線
+  drawnLines.push([a,b]);
+  draw();
+  if (drawnLines.length === level.lines.length) {
+    allowDraw = false;
+    clearInterval(timerInterval);
+    setTimeout(() => {
+      const used = Date.now() - startTime;
+      const min = Math.floor(used / 60000);
+      const sec = Math.floor((used % 60000) / 1000);
+      playSound("successSound");
+      showStars(sec);
+      recordResult(currentLevel, used, true);
+      document.getElementById("timeUsed").textContent =
+        `你用了 ${min} 分 ${sec} 秒完成這一關！`;
+      showScreen("result");
+    }, 1000);
+  }
+}
+
   const level = LEVELS[currentLevel];
   const valid = level.lines.some(l =>
     (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
