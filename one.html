@@ -1,4 +1,4 @@
-
+<!-- 更新邏輯：順序不限 + 中途離手會跳提示 -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -24,7 +24,7 @@
 
   <div id="game" style="display:none;">
     <h2 id="title">關卡</h2>
-    <p>請用手指從一點滑到另一點來畫線，不能重複，也要照順序喔！</p>
+    <p>請用手指從一點滑到另一點畫線，要一筆畫完，不能重複喔！</p>
     <div id="timer">時間：00:00</div>
     <canvas id="gameCanvas" width="300" height="300"></canvas>
     <br>
@@ -1003,11 +1003,11 @@ const LEVELS = [
 
 let currentLevel = 0;
 let drawnLines = [];
-let currentStep = 0;
 let startPointIndex = null;
 let startTime = null;
 let timerInterval = null;
 let flashing = false;
+let drawing = false;
 
 function renderLevelButtons() {
   const container = document.getElementById("levelButtons");
@@ -1023,8 +1023,8 @@ function renderLevelButtons() {
 function startLevel(index) {
   currentLevel = index;
   drawnLines = [];
-  currentStep = 0;
   startPointIndex = null;
+  drawing = false;
   startTime = Date.now();
   document.getElementById("home").style.display = "none";
   document.getElementById("game").style.display = "block";
@@ -1085,7 +1085,7 @@ function draw(flashRed = false) {
   });
 }
 
-function flashAndRestart() {
+function flashAndRestart(msg) {
   if (flashing) return;
   flashing = true;
   let count = 0;
@@ -1095,7 +1095,7 @@ function flashAndRestart() {
     if (count >= 4) {
       clearInterval(interval);
       flashing = false;
-      alert("線條不能重複或畫錯順序，請重新挑戰！");
+      alert(msg);
       startLevel(currentLevel);
     }
   }, 150);
@@ -1114,6 +1114,7 @@ function getPointIndex(x, y) {
 
 gameCanvas.addEventListener("touchstart", e => {
   e.preventDefault();
+  drawing = true;
   const touch = e.touches[0];
   const rect = gameCanvas.getBoundingClientRect();
   const x = touch.clientX - rect.left;
@@ -1123,6 +1124,7 @@ gameCanvas.addEventListener("touchstart", e => {
 });
 
 gameCanvas.addEventListener("touchmove", e => {
+  if (!drawing) return;
   e.preventDefault();
   const touch = e.touches[0];
   const rect = gameCanvas.getBoundingClientRect();
@@ -1130,25 +1132,38 @@ gameCanvas.addEventListener("touchmove", e => {
   const y = touch.clientY - rect.top;
   const index = getPointIndex(x, y);
   if (index !== null && index !== startPointIndex) {
-    const expectedLine = LEVELS[currentLevel].lines[currentStep];
     const attempt = [startPointIndex, index];
     const reverse = [index, startPointIndex];
-
-    const isCorrectOrder =
-      expectedLine[0] === attempt[0] && expectedLine[1] === attempt[1];
-
-    if (!isCorrectOrder) {
-      flashAndRestart();
+    const exists = drawnLines.some(
+      l => (l[0] === attempt[0] && l[1] === attempt[1]) || (l[0] === reverse[0] && l[1] === reverse[1])
+    );
+    const validLine = LEVELS[currentLevel].lines.some(
+      l => (l[0] === attempt[0] && l[1] === attempt[1]) || (l[0] === reverse[0] && l[1] === reverse[1])
+    );
+    if (exists) {
+      flashAndRestart("線條不能重複，請重新挑戰！");
+    } else if (!validLine) {
+      flashAndRestart("這條線不在底圖內喔，請重新挑戰！");
     } else {
       drawnLines.push(attempt);
       startPointIndex = index;
-      currentStep++;
       draw();
-      if (drawnLines.length === LEVELS[currentLevel].lines.length) {
+      const required = LEVELS[currentLevel].lines;
+      const allDone = required.every(req =>
+        drawnLines.some(d => (d[0] === req[0] && d[1] === req[1]) || (d[0] === req[1] && d[1] === req[0]))
+      );
+      if (allDone) {
         clearInterval(timerInterval);
         setTimeout(showResult, 1000);
       }
     }
+  }
+});
+
+gameCanvas.addEventListener("touchend", e => {
+  if (drawing) {
+    drawing = false;
+    flashAndRestart("必須一筆畫完，請重新挑戰！");
   }
 });
 
