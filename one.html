@@ -24,7 +24,7 @@
 
   <div id="game" style="display:none;">
     <h2 id="title">關卡</h2>
-    <p>請用手指從一點滑到另一點來畫線，不能重複喔！</p>
+    <p>請用手指從一點滑到另一點來畫線，不能重複，也要照順序喔！</p>
     <div id="timer">時間：00:00</div>
     <canvas id="gameCanvas" width="300" height="300"></canvas>
     <br>
@@ -1003,8 +1003,8 @@ const LEVELS = [
 
 let currentLevel = 0;
 let drawnLines = [];
+let currentStep = 0;
 let startPointIndex = null;
-let hoverPointIndex = null;
 let startTime = null;
 let timerInterval = null;
 let flashing = false;
@@ -1023,13 +1023,14 @@ function renderLevelButtons() {
 function startLevel(index) {
   currentLevel = index;
   drawnLines = [];
+  currentStep = 0;
   startPointIndex = null;
-  hoverPointIndex = null;
   startTime = Date.now();
   document.getElementById("home").style.display = "none";
   document.getElementById("game").style.display = "block";
   document.getElementById("result").style.display = "none";
   document.getElementById("title").textContent = `第${index + 1}關：${LEVELS[index].name}`;
+  clearInterval(timerInterval);
   timerInterval = setInterval(updateTimer, 1000);
   draw();
 }
@@ -1076,7 +1077,7 @@ function draw(flashRed = false) {
 
   pts.forEach((p,i) => {
     ctx.beginPath();
-    ctx.arc(p[0]*w, p[1]*h, i === hoverPointIndex ? 14 : 10, 0, Math.PI*2);
+    ctx.arc(p[0]*w, p[1]*h, 10, 0, Math.PI*2);
     ctx.fillStyle = "#8bd";
     ctx.fill();
     ctx.strokeStyle = "#f58";
@@ -1084,7 +1085,7 @@ function draw(flashRed = false) {
   });
 }
 
-function flashLine() {
+function flashAndRestart() {
   if (flashing) return;
   flashing = true;
   let count = 0;
@@ -1094,7 +1095,8 @@ function flashLine() {
     if (count >= 4) {
       clearInterval(interval);
       flashing = false;
-      draw();
+      alert("線條不能重複或畫錯順序，請重新挑戰！");
+      startLevel(currentLevel);
     }
   }, 150);
 }
@@ -1128,20 +1130,22 @@ gameCanvas.addEventListener("touchmove", e => {
   const y = touch.clientY - rect.top;
   const index = getPointIndex(x, y);
   if (index !== null && index !== startPointIndex) {
-    const line = [startPointIndex, index];
-    const rev = [index, startPointIndex];
-    const exists = drawnLines.some(l => (l[0] === line[0] && l[1] === line[1]) || (l[0] === line[1] && l[1] === line[0]));
-    if (exists) {
-      flashLine();
+    const expectedLine = LEVELS[currentLevel].lines[currentStep];
+    const attempt = [startPointIndex, index];
+    const reverse = [index, startPointIndex];
+
+    const isCorrectOrder =
+      expectedLine[0] === attempt[0] && expectedLine[1] === attempt[1];
+
+    if (!isCorrectOrder) {
+      flashAndRestart();
     } else {
-      drawnLines.push(line);
+      drawnLines.push(attempt);
       startPointIndex = index;
+      currentStep++;
       draw();
-      const target = LEVELS[currentLevel].lines.length;
-      if (drawnLines.length === target) {
+      if (drawnLines.length === LEVELS[currentLevel].lines.length) {
         clearInterval(timerInterval);
-        startPointIndex = null;
-        draw();
         setTimeout(showResult, 1000);
       }
     }
