@@ -30,6 +30,15 @@
     <button onclick="goHome()">回首頁</button>
   </div>
 
+  <div id="result" style="display:none;">
+    <h2>🎉 完成了！</h2>
+    <div id="timeUsed"></div>
+    <div id="stars" style="font-size:2rem; margin:10px;"></div>
+    <br>
+    <button onclick="goHome()">回首頁</button>
+    <button onclick="nextLevel()">下一關</button>
+  </div>
+
   <script>
 const LEVELS = [
   {
@@ -997,6 +1006,7 @@ let startPointIndex = null;
 let hoverPointIndex = null;
 let startTime = null;
 let timerInterval = null;
+let flashing = false;
 
 function renderLevelButtons() {
   const container = document.getElementById("levelButtons");
@@ -1017,6 +1027,7 @@ function startLevel(index) {
   startTime = Date.now();
   document.getElementById("home").style.display = "none";
   document.getElementById("game").style.display = "block";
+  document.getElementById("result").style.display = "none";
   document.getElementById("title").textContent = `第${index + 1}關：${LEVELS[index].name}`;
   timerInterval = setInterval(updateTimer, 1000);
   draw();
@@ -1025,6 +1036,7 @@ function startLevel(index) {
 function goHome() {
   document.getElementById("home").style.display = "block";
   document.getElementById("game").style.display = "none";
+  document.getElementById("result").style.display = "none";
   clearInterval(timerInterval);
 }
 
@@ -1035,7 +1047,7 @@ function updateTimer() {
   document.getElementById("timer").textContent = `時間：${min}:${sec}`;
 }
 
-function draw() {
+function draw(flashRed = false) {
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
   const w = canvas.width, h = canvas.height;
@@ -1054,7 +1066,7 @@ function draw() {
   });
 
   // 已畫線
-  ctx.strokeStyle = "#f58";
+  ctx.strokeStyle = flashRed ? "#f00" : "#f58";
   ctx.lineWidth = 4;
   drawnLines.forEach(([a,b]) => {
     ctx.beginPath();
@@ -1072,6 +1084,21 @@ function draw() {
     ctx.strokeStyle = "#f58";
     ctx.stroke();
   });
+}
+
+function flashLine() {
+  if (flashing) return;
+  flashing = true;
+  let count = 0;
+  const interval = setInterval(() => {
+    draw(count % 2 === 0);
+    count++;
+    if (count > 4) {
+      clearInterval(interval);
+      flashing = false;
+      draw();
+    }
+  }, 150);
 }
 
 function getPointIndex(x, y) {
@@ -1106,13 +1133,48 @@ gameCanvas.addEventListener("touchmove", e => {
     const line = [startPointIndex, index];
     const rev = [index, startPointIndex];
     const exists = drawnLines.some(l => (l[0] === line[0] && l[1] === line[1]) || (l[0] === line[1] && l[1] === line[0]));
-    if (!exists) {
+    if (exists) {
+      flashLine();
+    } else {
       drawnLines.push(line);
       startPointIndex = index;
       draw();
+      if (drawnLines.length === LEVELS[currentLevel].lines.length) {
+        clearInterval(timerInterval);
+        setTimeout(() => showResult(), 1000);
+      }
     }
   }
 });
+
+function showResult() {
+  document.getElementById("game").style.display = "none";
+  document.getElementById("result").style.display = "block";
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const min = Math.floor(elapsed / 60);
+  const sec = elapsed % 60;
+  document.getElementById("timeUsed").textContent = `用時：${min}分${sec}秒`;
+
+  let stars = 3;
+  if (elapsed > 40) stars = 1;
+  else if (elapsed > 25) stars = 2;
+  document.getElementById("stars").textContent = "⭐".repeat(stars);
+
+  // 儲存最佳時間
+  const key = "level" + currentLevel;
+  const prev = localStorage.getItem(key);
+  if (!prev || elapsed < parseInt(prev)) {
+    localStorage.setItem(key, elapsed);
+  }
+}
+
+function nextLevel() {
+  if (currentLevel + 1 < LEVELS.length) {
+    startLevel(currentLevel + 1);
+  } else {
+    goHome();
+  }
+}
 
 renderLevelButtons();
 </script>
