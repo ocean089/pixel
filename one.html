@@ -1,100 +1,36 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>一筆畫遊戲</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: "Arial", sans-serif;
-      background-color: #fef6e4;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
-    #home, #game, #result {
-      display: none;
-      padding: 20px;
-    }
-    .active {
-      display: block !important;
-    }
+    body { font-family: sans-serif; background: #fdf5e6; text-align: center; margin: 0; padding: 40px; }
+    h1 { font-size: 2.4em; margin-bottom: 0.3em; }
     button {
-      font-size: 1.2rem;
-      padding: 12px 24px;
-      margin: 12px;
-      border: none;
-      border-radius: 10px;
-      background-color: #f582ae;
-      color: white;
-      cursor: pointer;
+      margin: 5px; padding: 10px 16px; font-size: 16px;
+      border: none; border-radius: 8px; background: #ec88ad; color: white;
     }
-    canvas {
-      background-color: #fff;
-      border: 2px solid #8bd3dd;
-      margin-top: 20px;
-      max-width: 90vw;
-      height: auto;
-      touch-action: none;
-    }
-    #title {
-      font-size: 1.6rem;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-    #instructions {
-      font-size: 1.1rem;
-      margin-bottom: 10px;
-    }
-    #timer {
-      font-size: 1.3rem;
-      color: #333;
-    }
-    #result h2 {
-      font-size: 2rem;
-      color: #f582ae;
-      animation: pop 1s ease-in-out infinite alternate;
-    }
-    @keyframes pop {
-      from { transform: scale(1); }
-      to { transform: scale(1.1); }
-    }
+    canvas { border: 2px solid lightblue; margin-top: 10px; touch-action: none; }
   </style>
 </head>
 <body>
-<div id="home" class="active">
-  <h1 style="font-size: 2rem; margin-top: 30px;">一筆畫遊戲</h1>
-  <p>請選擇關卡開始挑戰：</p>
-  <button onclick="showRecords()">老師查看紀錄</button><br><div id="levelButtons"></div>
-<div id="records" style="display: none; padding: 20px;">
-  <h2>學生成績查詢</h2>
-  <canvas id="chartCanvas" width="350" height="300" style="border:1px solid #ccc;"></canvas>
-  <br>
-  <button onclick="goHome()">回首頁</button>
-</div>
+  <div id="home">
+    <h1>一筆畫遊戲</h1>
+    <p>請選擇關卡開始挑戰：</p>
+    <div id="levelButtons"></div>
+  </div>
 
-</div>
-<div id="game">
-  <div id="title"></div>
-  <div id="instructions">請用手指從一點滑到另一點來畫線，不能重複喔！</div>
-  <div id="timer">時間：00:00</div>
-  <canvas id="gameCanvas" width="400" height="400"></canvas>
-  <br />
-  <button onclick="resetGame()">重新開始</button>
-<br />
-<button onclick="goHome()">回首頁</button>
+  <div id="game" style="display:none;">
+    <h2 id="title">關卡</h2>
+    <p>請用手指從一點滑到另一點來畫線，不能重複喔！</p>
+    <div id="timer">時間：00:00</div>
+    <canvas id="gameCanvas" width="300" height="300"></canvas>
+    <br>
+    <button onclick="goHome()">回首頁</button>
+  </div>
 
-</div>
-<div id="result">
-  <h2>完成了！</h2>
-  <p id="timeUsed"></p>
-  <div id="stars" style="font-size: 2rem; color: gold; margin-top: 1rem;"></div>
-  <button onclick="goHome()">回首頁</button>
-  <button onclick="nextLevel()">下一關</button>
-</div>
-<audio id="successSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_e8cd8b6a08.mp3"></audio>
-<audio id="failSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_20684fce18.mp3"></audio>
-<script>
+  <script>
 const LEVELS = [
   {
     "name": "\u4e09\u89d2\u5f62",
@@ -1054,121 +990,13 @@ const LEVELS = [
     ]
   }
 ];
-function flashLine(a, b) {
-  const pts = LEVELS[currentLevel].points;
-  const w = canvas.width;
-  const h = canvas.height;
-  let count = 0;
-  const interval = setInterval(() => {
-    if (count >= 4) {
-      clearInterval(interval);
-      draw(); // 恢復正常畫面
-      return;
-    }
-    ctx.strokeStyle = (count % 2 === 0) ? "red" : "#fff";
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.moveTo(pts[a][0]*w, pts[a][1]*h);
-    ctx.lineTo(pts[b][0]*w, pts[b][1]*h);
-    ctx.stroke();
-    count++;
-  }, 150);
-}
 
-function tryDrawLine(a, b) {
-  const level = LEVELS[currentLevel];
-  const valid = level.lines.some(l =>
-    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
-  const exists = drawnLines.some(l =>
-    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
-
-  if (!valid) return; // 不合法線跳過
-
-  if (exists) {
-    playSound("failSound");
-    flashLine(a, b);
-    alert("這條線已經畫過了喔，不能重複畫！");
-    return;
-  }
-
-  drawnLines.push([a,b]);
-  draw();
-  if (drawnLines.length === level.lines.length) {
-    allowDraw = false;
-    clearInterval(timerInterval);
-    setTimeout(() => {
-      const used = Date.now() - startTime;
-      const min = Math.floor(used / 60000);
-      const sec = Math.floor((used % 60000) / 1000);
-      playSound("successSound");
-      showStars(sec);
-      recordResult(currentLevel, used, true);
-      document.getElementById("timeUsed").textContent =
-        `你用了 ${min} 分 ${sec} 秒完成這一關！`;
-      showScreen("result");
-    }, 1000);
-  }
-}
-
-function speak(text) {
-  if ('speechSynthesis' in window) {
-    const utter = new SpeechSynthesisUtterance(text);
-    speechSynthesis.speak(utter);
-  }
-}
-
-function showRecords() {
-  showScreen("records");
-  drawChart();
-}
-
-function drawChart() {
-  const canvas = document.getElementById("chartCanvas");
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const data = JSON.parse(localStorage.getItem("results") || "[]");
-
-  // Draw X axis labels (levels)
-  for (let i = 0; i < LEVELS.length; i++) {
-    const x = 20 + i * 20;
-    ctx.fillStyle = "#333";
-    ctx.fillText(i + 1, x, 290);
-  }
-
-  // Draw bars (height = time, color = stars)
-  for (let i = 0; i < LEVELS.length; i++) {
-    const d = data[i];
-    if (!d || !d.passed) continue;
-    const timeSec = Math.floor(d.time / 1000);
-    const stars = (timeSec <= 5) ? 3 : (timeSec <= 10) ? 2 : 1;
-    const barHeight = Math.min(200, timeSec * 5);
-    const x = 20 + i * 20;
-    const y = 280 - barHeight;
-
-    ctx.fillStyle = stars === 3 ? "#ffd700" : stars === 2 ? "#fbb034" : "#ff4d4d";
-    ctx.fillRect(x, y, 10, barHeight);
-  }
-}
-
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
 let currentLevel = 0;
 let drawnLines = [];
 let startPointIndex = null;
 let hoverPointIndex = null;
 let startTime = null;
 let timerInterval = null;
-let allowDraw = true;
-
-function showScreen(id) {
-  document.querySelectorAll("div").forEach(d => d.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-}
-
-function goHome() {
-  showScreen("home");
-  renderLevelButtons();
-}
 
 function renderLevelButtons() {
   const container = document.getElementById("levelButtons");
@@ -1181,46 +1009,36 @@ function renderLevelButtons() {
   });
 }
 
-function resizeCanvas() {
-  const size = Math.min(window.innerWidth * 0.9, 400);
-  canvas.width = size;
-  canvas.height = size;
-  draw();
-}
-
-function startLevel(levelIndex) {
-  currentLevel = levelIndex;
+function startLevel(index) {
+  currentLevel = index;
   drawnLines = [];
   startPointIndex = null;
   hoverPointIndex = null;
-  allowDraw = true;
+  startTime = Date.now();
+  document.getElementById("home").style.display = "none";
+  document.getElementById("game").style.display = "block";
+  document.getElementById("title").textContent = `第${index + 1}關：${LEVELS[index].name}`;
+  timerInterval = setInterval(updateTimer, 1000);
+  draw();
+}
+
+function goHome() {
+  document.getElementById("home").style.display = "block";
+  document.getElementById("game").style.display = "none";
   clearInterval(timerInterval);
-  document.getElementById("timer").textContent = "時間：00:00";
-  startTime = null;
-  
-  const levelName = LEVELS[levelIndex].name;
-  document.getElementById("title").textContent = `第${levelIndex + 1}關：${levelName}`;
-  speak(`第${levelIndex + 1}關，${levelName}，請一筆畫完成`);
-
-  showScreen("game");
-  resizeCanvas();
 }
 
-function resetGame() {
-  startLevel(currentLevel);
-}
-
-function nextLevel() {
-  if (currentLevel + 1 < LEVELS.length) {
-    startLevel(currentLevel + 1);
-  } else {
-    goHome();
-  }
+function updateTimer() {
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const min = Math.floor(elapsed / 60).toString().padStart(2, '0');
+  const sec = (elapsed % 60).toString().padStart(2, '0');
+  document.getElementById("timer").textContent = `時間：${min}:${sec}`;
 }
 
 function draw() {
-  const w = canvas.width;
-  const h = canvas.height;
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width, h = canvas.height;
   ctx.clearRect(0, 0, w, h);
   const level = LEVELS[currentLevel];
   const pts = level.points;
@@ -1236,7 +1054,7 @@ function draw() {
   });
 
   // 已畫線
-  ctx.strokeStyle = "#f582ae";
+  ctx.strokeStyle = "#f58";
   ctx.lineWidth = 4;
   drawnLines.forEach(([a,b]) => {
     ctx.beginPath();
@@ -1246,116 +1064,57 @@ function draw() {
   });
 
   // 點
-  pts.forEach((p, i) => {
+  pts.forEach((p,i) => {
     ctx.beginPath();
-    const r = (i === startPointIndex || i === hoverPointIndex) ? 14 : 10;
-    ctx.arc(p[0]*w, p[1]*h, r, 0, Math.PI*2);
-    ctx.fillStyle = "#8bd3dd";
+    ctx.arc(p[0]*w, p[1]*h, i === hoverPointIndex ? 14 : 10, 0, Math.PI*2);
+    ctx.fillStyle = "#8bd";
     ctx.fill();
-    ctx.strokeStyle = "#f582ae";
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#f58";
     ctx.stroke();
   });
 }
 
 function getPointIndex(x, y) {
   const pts = LEVELS[currentLevel].points;
-  const w = canvas.width;
-  const h = canvas.height;
+  const w = gameCanvas.width, h = gameCanvas.height;
   for (let i = 0; i < pts.length; i++) {
-    const px = pts[i][0]*w;
-    const py = pts[i][1]*h;
-    const dx = px - x;
-    const dy = py - y;
-    if (dx*dx + dy*dy < 400) return i;
+    const dx = x - pts[i][0]*w;
+    const dy = y - pts[i][1]*h;
+    if (dx*dx + dy*dy < 200) return i;
   }
   return null;
 }
 
-canvas.addEventListener("touchstart", (e) => {
-  if (!allowDraw) return;
+gameCanvas.addEventListener("touchstart", e => {
   e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
   const touch = e.touches[0];
+  const rect = gameCanvas.getBoundingClientRect();
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
   const index = getPointIndex(x, y);
-  if (index !== null) {
-    startPointIndex = index;
-    if (!startTime) {
-      startTime = Date.now();
-      timerInterval = setInterval(updateTimer, 1000);
-    }
-  }
+  if (index !== null) startPointIndex = index;
 });
 
-canvas.addEventListener("touchmove", (e) => {
-  if (!allowDraw || startPointIndex === null) return;
-  const rect = canvas.getBoundingClientRect();
+gameCanvas.addEventListener("touchmove", e => {
+  e.preventDefault();
   const touch = e.touches[0];
+  const rect = gameCanvas.getBoundingClientRect();
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
-  hoverPointIndex = getPointIndex(x, y);
-  draw();
-
-  if (hoverPointIndex !== null && hoverPointIndex !== startPointIndex) {
-    tryDrawLine(startPointIndex, hoverPointIndex);
-    startPointIndex = hoverPointIndex;
-    hoverPointIndex = null;
-  }
-});
-
-canvas.addEventListener("touchend", () => {
-  if (!allowDraw) return;
-  if (drawnLines.length < LEVELS[currentLevel].lines.length) {
-    alert("Oops! 要一筆畫完成，不能抬起手喔！");
-    resetGame();
-  }
-  startPointIndex = null;
-  hoverPointIndex = null;
-  draw();
-});
-
-function tryDrawLine(a, b) {
-  const level = LEVELS[currentLevel];
-  const valid = level.lines.some(l =>
-    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
-  const exists = drawnLines.some(l =>
-    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
-  if (valid && !exists) {
-    drawnLines.push([a,b]);
-    draw();
-    if (drawnLines.length === level.lines.length) {
-      allowDraw = false;
-      clearInterval(timerInterval);
-      setTimeout(() => {
-        const used = Date.now() - startTime;
-        const min = Math.floor(used / 60000);
-        const sec = Math.floor((used % 60000) / 1000);
-        document.getElementById("timeUsed").textContent =
-          `你用了 ${min} 分 ${sec} 秒完成這一關！`;
-        showScreen("result");
-      }, 1000);
+  const index = getPointIndex(x, y);
+  if (index !== null && index !== startPointIndex) {
+    const line = [startPointIndex, index];
+    const rev = [index, startPointIndex];
+    const exists = drawnLines.some(l => (l[0] === line[0] && l[1] === line[1]) || (l[0] === line[1] && l[1] === line[0]));
+    if (!exists) {
+      drawnLines.push(line);
+      startPointIndex = index;
+      draw();
     }
   }
-}
+});
 
-function updateTimer() {
-  const elapsed = Date.now() - startTime;
-  const min = Math.floor(elapsed / 60000);
-  const sec = Math.floor((elapsed % 60000) / 1000);
-  document.getElementById("timer").textContent = `時間：${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-}
-
-window.onload = () => {
-  renderLevelButtons();
-  goHome();
-  resizeCanvas();
-};
-</script>
-</body>
-</html>
-
+renderLevelButtons();
 </script>
 </body>
 </html>
