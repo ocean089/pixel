@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>一筆畫遊戲（點放大 + 即時畫線）</title>
+  <style>
+    body {
+      font-family: "Arial", sans-serif;
+      text-align: center;
+      background-color: #fef6e4;
+      margin: 0;
+      padding: 0;
+    }
+
+    #home, #game, #result {
+      display: none;
+      padding: 20px;
+    }
+
+    .active {
+      display: block !important;
+    }
+
+    button {
+      font-size: 1.4rem;
+      padding: 16px 32px;
+      margin: 20px;
+      border: none;
+      border-radius: 10px;
+      background-color: #f582ae;
+      color: white;
+      cursor: pointer;
+    }
+
+    canvas {
+      background-color: #fff;
+      border: 2px solid #8bd3dd;
+      margin-top: 20px;
+      max-width: 90vw;
+      height: auto;
+      touch-action: none;
+    }
+
+    #title {
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    #instructions {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+
+    #timer {
+      font-size: 1.3rem;
+      color: #333;
+    }
+
+    #result h2 {
+      font-size: 2rem;
+      color: #f582ae;
+      animation: pop 1s ease-in-out infinite alternate;
+    }
+
+    @keyframes pop {
+      from { transform: scale(1); }
+      to { transform: scale(1.1); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="home" class="active">
+  <h1 style="font-size: 2rem; margin-top: 40px;">一筆畫遊戲</h1>
+  <button onclick="startGame()">第一題：三角形</button>
+</div>
+
+<div id="game">
+  <div id="title">第1關：畫出三角形</div>
+  <div id="instructions">請用手指從一點滑到另一點來畫線，不能重複喔！</div>
+  <div id="timer">時間：00:00</div>
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+  <br />
+  <button onclick="resetGame()">重新開始</button>
+</div>
+
+<div id="result">
+  <h2>完成了！</h2>
+  <p id="timeUsed"></p>
+  <button onclick="goHome()">回首頁</button>
+  <button onclick="startGame()">下一關</button>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let drawnLines = [];
+let startPointIndex = null;
+let hoverPointIndex = null;
+let startTime = null;
+let timerInterval;
+
+const points = [
+  { x: 0.5, y: 0.2 },
+  { x: 0.2, y: 0.8 },
+  { x: 0.8, y: 0.8 }
+];
+
+let lines = [
+  [0, 1],
+  [1, 2],
+  [2, 0]
+];
+
+function resizeCanvas() {
+  const size = Math.min(window.innerWidth * 0.9, 400);
+  canvas.width = size;
+  canvas.height = size;
+  draw();
+}
+
+function showScreen(id) {
+  document.querySelectorAll("div").forEach(d => d.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function startGame() {
+  drawnLines = [];
+  startPointIndex = null;
+  hoverPointIndex = null;
+  clearInterval(timerInterval);
+  document.getElementById("timer").textContent = "時間：00:00";
+  startTime = null;
+  showScreen("game");
+  resizeCanvas();
+}
+
+function resetGame() {
+  drawnLines = [];
+  startPointIndex = null;
+  hoverPointIndex = null;
+  clearInterval(timerInterval);
+  document.getElementById("timer").textContent = "時間：00:00";
+  startTime = null;
+  draw();
+}
+
+function goHome() {
+  showScreen("home");
+}
+
+function draw() {
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // draw guide lines
+  ctx.strokeStyle = "#ccc";
+  ctx.lineWidth = 2;
+  lines.forEach(([a, b]) => {
+    ctx.beginPath();
+    ctx.moveTo(points[a].x * w, points[a].y * h);
+    ctx.lineTo(points[b].x * w, points[b].y * h);
+    ctx.stroke();
+  });
+
+  // draw user drawn lines
+  ctx.strokeStyle = "#f582ae";
+  ctx.lineWidth = 4;
+  drawnLines.forEach(([a, b]) => {
+    ctx.beginPath();
+    ctx.moveTo(points[a].x * w, points[a].y * h);
+    ctx.lineTo(points[b].x * w, points[b].y * h);
+    ctx.stroke();
+  });
+
+  // draw points with highlight
+  points.forEach((p, i) => {
+    ctx.beginPath();
+    let radius = 10;
+    if (i === hoverPointIndex || i === startPointIndex) radius = 14;
+    ctx.arc(p.x * w, p.y * h, radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#8bd3dd";
+    ctx.fill();
+    ctx.strokeStyle = "#f582ae";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  });
+}
+
+function getPointIndex(x, y) {
+  const w = canvas.width;
+  const h = canvas.height;
+  for (let i = 0; i < points.length; i++) {
+    const px = points[i].x * w;
+    const py = points[i].y * h;
+    const dx = px - x;
+    const dy = py - y;
+    if (dx * dx + dy * dy < 400) return i;
+  }
+  return null;
+}
+
+canvas.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+  const index = getPointIndex(x, y);
+  if (index !== null) {
+    startPointIndex = index;
+    if (!startTime) {
+      startTime = Date.now();
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+  }
+});
+
+canvas.addEventListener("touchmove", (e) => {
+  if (startPointIndex === null) return;
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+  hoverPointIndex = getPointIndex(x, y);
+  draw();
+
+  if (hoverPointIndex !== null && hoverPointIndex !== startPointIndex) {
+    tryDrawLine(startPointIndex, hoverPointIndex);
+    startPointIndex = hoverPointIndex;
+    hoverPointIndex = null;
+  }
+});
+
+canvas.addEventListener("touchend", () => {
+  startPointIndex = null;
+  hoverPointIndex = null;
+  draw();
+});
+
+function tryDrawLine(a, b) {
+  const valid = lines.some(l =>
+    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a)
+  );
+  const exists = drawnLines.some(dl =>
+    (dl[0] === a && dl[1] === b) || (dl[0] === b && dl[1] === a)
+  );
+
+  if (valid && !exists) {
+    drawnLines.push([a, b]);
+    draw();
+
+    if (drawnLines.length === lines.length) {
+      clearInterval(timerInterval);
+      const usedTime = Date.now() - startTime;
+      const minutes = Math.floor(usedTime / 60000);
+      const seconds = Math.floor((usedTime % 60000) / 1000);
+      document.getElementById("timeUsed").textContent =
+        `你用了 ${minutes} 分 ${seconds} 秒完成這一關！`;
+      showScreen("result");
+    }
+  }
+}
+
+function updateTimer() {
+  const elapsed = Date.now() - startTime;
+  const minutes = Math.floor(elapsed / 60000);
+  const seconds = Math.floor((elapsed % 60000) / 1000);
+  document.getElementById("timer").textContent = `時間：${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+window.onload = () => {
+  showScreen("home");
+  resizeCanvas();
+};
+</script>
+
+</body>
+</html>
