@@ -227,7 +227,16 @@ canvas.addEventListener("touchmove", (e) => {
   const touch = e.touches[0];
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
+  
   hoverPointIndex = getPointIndex(x, y);
+
+  // 如果有效且未畫過，畫線（即時畫線）
+  if (hoverPointIndex !== null && hoverPointIndex !== startPointIndex) {
+    tryDrawLine(startPointIndex, hoverPointIndex);
+    startPointIndex = hoverPointIndex;
+    hoverPointIndex = null;
+  }
+
   draw();
 
   if (hoverPointIndex !== null && hoverPointIndex !== startPointIndex) {
@@ -237,7 +246,15 @@ canvas.addEventListener("touchmove", (e) => {
   }
 });
 
+
 canvas.addEventListener("touchend", () => {
+  // 如果還沒畫完就結束，視為失敗
+  if (drawnLines.length < lines.length) {
+    alert("Oops! 要一筆畫完成，不能抬起手喔！");
+    resetGame();
+    return;
+  }
+
   startPointIndex = null;
   hoverPointIndex = null;
   draw();
