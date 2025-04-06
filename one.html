@@ -164,39 +164,19 @@ const LEVELS = [
         0.1
       ],
       [
-        0.65,
+        0.8,
         0.35
       ],
       [
-        0.9,
-        0.4
-      ],
-      [
-        0.7,
-        0.6
-      ],
-      [
-        0.8,
-        0.9
-      ],
-      [
-        0.5,
-        0.7
-      ],
-      [
-        0.2,
-        0.9
-      ],
-      [
-        0.3,
-        0.6
-      ],
-      [
-        0.1,
-        0.4
+        0.65,
+        0.85
       ],
       [
         0.35,
+        0.85
+      ],
+      [
+        0.2,
         0.35
       ]
     ],
@@ -207,18 +187,18 @@ const LEVELS = [
       ],
       [
         2,
-        6
+        4
       ],
       [
-        6,
+        4,
         1
       ],
       [
         1,
-        7
+        3
       ],
       [
-        7,
+        3,
         0
       ]
     ]
@@ -649,6 +629,31 @@ const LEVELS = [
     ]
   }
 ];
+function tryDrawLine(a, b) {
+  const level = LEVELS[currentLevel];
+  const valid = level.lines.some(l =>
+    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
+  const exists = drawnLines.some(l =>
+    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
+  if (!valid || exists) return; // 阻止重複線
+  drawnLines.push([a,b]);
+  draw();
+  if (drawnLines.length === level.lines.length) {
+    allowDraw = false;
+    clearInterval(timerInterval);
+    setTimeout(() => {
+      const used = Date.now() - startTime;
+      const min = Math.floor(used / 60000);
+      const sec = Math.floor((used % 60000) / 1000);
+      playSound("successSound");
+      showStars(sec);
+      recordResult(currentLevel, used, true);
+      document.getElementById("timeUsed").textContent =
+        `你用了 ${min} 分 ${sec} 秒完成這一關！`;
+      showScreen("result");
+    }, 1000);
+  }
+}
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -812,33 +817,7 @@ canvas.addEventListener("touchend", () => {
   draw();
 });
 
-
 function tryDrawLine(a, b) {
-  const level = LEVELS[currentLevel];
-  const valid = level.lines.some(l =>
-    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
-  const exists = drawnLines.some(l =>
-    (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
-  if (!valid || exists) return; // 阻止重複線
-  drawnLines.push([a,b]);
-  draw();
-  if (drawnLines.length === level.lines.length) {
-    allowDraw = false;
-    clearInterval(timerInterval);
-    setTimeout(() => {
-      const used = Date.now() - startTime;
-      const min = Math.floor(used / 60000);
-      const sec = Math.floor((used % 60000) / 1000);
-      playSound("successSound");
-      showStars(sec);
-      recordResult(currentLevel, used, true);
-      document.getElementById("timeUsed").textContent =
-        `你用了 ${min} 分 ${sec} 秒完成這一關！`;
-      showScreen("result");
-    }, 1000);
-  }
-}
-
   const level = LEVELS[currentLevel];
   const valid = level.lines.some(l =>
     (l[0] === a && l[1] === b) || (l[0] === b && l[1] === a));
@@ -870,6 +849,7 @@ function updateTimer() {
 }
 
 window.onload = () => {
+  renderLevelButtons();
   goHome();
   resizeCanvas();
 };
