@@ -1,4 +1,4 @@
-<!-- 更新邏輯：順序不限 + 中途離手會跳提示 -->
+<!-- 修正完成延遲：成功立即判定，延遲僅展示成功畫面 -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -1008,6 +1008,7 @@ let startTime = null;
 let timerInterval = null;
 let flashing = false;
 let drawing = false;
+let completed = false;
 
 function renderLevelButtons() {
   const container = document.getElementById("levelButtons");
@@ -1025,6 +1026,7 @@ function startLevel(index) {
   drawnLines = [];
   startPointIndex = null;
   drawing = false;
+  completed = false;
   startTime = Date.now();
   document.getElementById("home").style.display = "none";
   document.getElementById("game").style.display = "block";
@@ -1124,7 +1126,7 @@ gameCanvas.addEventListener("touchstart", e => {
 });
 
 gameCanvas.addEventListener("touchmove", e => {
-  if (!drawing) return;
+  if (!drawing || completed) return;
   e.preventDefault();
   const touch = e.touches[0];
   const rect = gameCanvas.getBoundingClientRect();
@@ -1152,7 +1154,8 @@ gameCanvas.addEventListener("touchmove", e => {
       const allDone = required.every(req =>
         drawnLines.some(d => (d[0] === req[0] && d[1] === req[1]) || (d[0] === req[1] && d[1] === req[0]))
       );
-      if (allDone) {
+      if (allDone && !completed) {
+        completed = true;
         clearInterval(timerInterval);
         setTimeout(showResult, 1000);
       }
@@ -1161,7 +1164,7 @@ gameCanvas.addEventListener("touchmove", e => {
 });
 
 gameCanvas.addEventListener("touchend", e => {
-  if (drawing) {
+  if (drawing && !completed) {
     drawing = false;
     flashAndRestart("必須一筆畫完，請重新挑戰！");
   }
