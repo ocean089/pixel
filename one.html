@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -1055,7 +1056,6 @@ function draw(flashRed = false) {
   const level = LEVELS[currentLevel];
   const pts = level.points;
 
-  // 底線
   ctx.strokeStyle = "#ccc";
   ctx.lineWidth = 2;
   level.lines.forEach(([a,b]) => {
@@ -1065,7 +1065,6 @@ function draw(flashRed = false) {
     ctx.stroke();
   });
 
-  // 已畫線
   ctx.strokeStyle = flashRed ? "#f00" : "#f58";
   ctx.lineWidth = 4;
   drawnLines.forEach(([a,b]) => {
@@ -1075,7 +1074,6 @@ function draw(flashRed = false) {
     ctx.stroke();
   });
 
-  // 點
   pts.forEach((p,i) => {
     ctx.beginPath();
     ctx.arc(p[0]*w, p[1]*h, i === hoverPointIndex ? 14 : 10, 0, Math.PI*2);
@@ -1093,7 +1091,7 @@ function flashLine() {
   const interval = setInterval(() => {
     draw(count % 2 === 0);
     count++;
-    if (count > 4) {
+    if (count >= 4) {
       clearInterval(interval);
       flashing = false;
       draw();
@@ -1139,9 +1137,12 @@ gameCanvas.addEventListener("touchmove", e => {
       drawnLines.push(line);
       startPointIndex = index;
       draw();
-      if (drawnLines.length === LEVELS[currentLevel].lines.length) {
+      const target = LEVELS[currentLevel].lines.length;
+      if (drawnLines.length === target) {
         clearInterval(timerInterval);
-        setTimeout(() => showResult(), 1000);
+        startPointIndex = null;
+        draw();
+        setTimeout(showResult, 1000);
       }
     }
   }
@@ -1160,7 +1161,6 @@ function showResult() {
   else if (elapsed > 25) stars = 2;
   document.getElementById("stars").textContent = "⭐".repeat(stars);
 
-  // 儲存最佳時間
   const key = "level" + currentLevel;
   const prev = localStorage.getItem(key);
   if (!prev || elapsed < parseInt(prev)) {
