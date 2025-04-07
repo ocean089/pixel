@@ -1,0 +1,168 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>一筆畫遊戲</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; background: #fdf5e6; text-align: center; }
+    h1 { font-size: 2.4em; margin-top: 30px; }
+    button {
+      margin: 8px; padding: 10px 16px; font-size: 16px;
+      border: none; border-radius: 8px; background: #ec88ad; color: white;
+    }
+    canvas { border: 2px solid #ccc; margin-top: 10px; touch-action: none; }
+  </style>
+</head>
+<body>
+  <h1>一筆畫遊戲</h1>
+  <p>請選擇關卡開始挑戰：</p>
+  <div id="levelButtons"></div>
+  <canvas id="canvas" width="300" height="300"></canvas>
+  <div id="message" style="margin-top:20px; font-size: 1.2em;"></div>
+
+  <script>
+    const LEVELS = [{'name': '三角形', 'points': [[0.5, 0.2], [0.2, 0.8], [0.8, 0.8]], 'lines': [[0, 1], [1, 2], [2, 0]]}, {'name': '正方形', 'points': [[0.2, 0.2], [0.8, 0.2], [0.8, 0.8], [0.2, 0.8]], 'lines': [[0, 1], [1, 2], [2, 3], [3, 0]]}, {'name': '五芒星', 'points': [[0.5, 0.1], [0.7, 0.7], [0.2, 0.3], [0.8, 0.3], [0.3, 0.7]], 'lines': [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0]]}, {'name': '舊房子', 'points': [[0.2, 0.5], [0.8, 0.5], [0.8, 0.8], [0.2, 0.8], [0.5, 0.2]], 'lines': [[0, 1], [1, 2], [2, 3], [3, 0], [0, 4], [1, 4]]}, {'name': '房子', 'points': [[0.5, 0.1], [0.2, 0.3], [0.8, 0.3], [0.2, 0.8], [0.8, 0.8], [0.5, 0.55]], 'lines': [[0, 1], [0, 2], [1, 2], [1, 3], [2, 4], [3, 4], [1, 4], [2, 3]]}];
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width, h = canvas.height;
+    let currentLevel = null;
+    let drawnLines = [];
+    let startPoint = null;
+    let isDrawing = false;
+
+    function renderButtons() {
+      const div = document.getElementById("levelButtons");
+      div.innerHTML = "";
+      for (let i = 0; i < LEVELS.length; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = "第" + (i+1) + "關：" + LEVELS[i].name;
+        btn.onclick = () => loadLevel(i);
+        div.appendChild(btn);
+      }
+    }
+
+    function loadLevel(index) {
+      currentLevel = index;
+      drawnLines = [];
+      startPoint = null;
+      isDrawing = false;
+      document.getElementById("message").textContent = "";
+      draw();
+    }
+
+      draw();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      const level = LEVELS[currentLevel];
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#ccc";
+      level.lines.forEach(([a,b]) => {
+        ctx.beginPath();
+        ctx.moveTo(level.points[a][0]*w, level.points[a][1]*h);
+        ctx.lineTo(level.points[b][0]*w, level.points[b][1]*h);
+        ctx.stroke();
+      });
+      // 畫已畫線
+      ctx.strokeStyle = "#58a";
+      ctx.lineWidth = 4;
+      drawnLines.forEach(([a,b]) => {
+        ctx.beginPath();
+        ctx.moveTo(level.points[a][0]*w, level.points[a][1]*h);
+        ctx.lineTo(level.points[b][0]*w, level.points[b][1]*h);
+        ctx.stroke();
+      });
+      // 畫點
+      level.points.forEach(([x,y]) => {
+        ctx.beginPath();
+        ctx.arc(x*w, y*h, 6, 0, Math.PI*2);
+        ctx.fillStyle = "#8bd";
+        ctx.fill();
+        ctx.strokeStyle = "#f58";
+        ctx.stroke();
+      });
+    }
+
+    canvas.addEventListener("touchstart", e => {
+      if (!currentLevel) return;
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      const index = getPointIndex(x, y);
+      if (index !== null) {
+        startPoint = index;
+        isDrawing = true;
+      }
+    });
+
+    canvas.addEventListener("touchmove", e => {
+      if (!isDrawing || startPoint === null) return;
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      const end = getPointIndex(x, y);
+      if (end !== null && end !== startPoint) {
+        const line = [startPoint, end];
+        const lineRev = [end, startPoint];
+        const level = LEVELS[currentLevel];
+        const validLine = level.lines.some(
+          l => (l[0] === line[0] && l[1] === line[1]) || (l[0] === line[1] && l[1] === line[0])
+        );
+        const repeated = drawnLines.some(
+          l => (l[0] === line[0] && l[1] === line[1]) || (l[0] === line[1] && l[1] === line[0])
+        );
+        if (!validLine || repeated) {
+          flashRed();
+          alert("線條不能重複！");
+          loadLevel(currentLevel);
+          return;
+        }
+        drawnLines.push(line);
+        startPoint = end;
+        draw();
+        checkSuccess();
+      }
+    });
+
+    canvas.addEventListener("touchend", () => {
+      if (drawnLines.length < LEVELS[currentLevel].lines.length) {
+        alert("要一筆畫完喔！");
+        loadLevel(currentLevel);
+      }
+    });
+
+    function getPointIndex(x, y) {
+      const pts = LEVELS[currentLevel].points;
+      for (let i = 0; i < pts.length; i++) {
+        const dx = x - pts[i][0]*w;
+        const dy = y - pts[i][1]*h;
+        if (dx*dx + dy*dy < 400) return i;
+      }
+      return null;
+    }
+
+    function checkSuccess() {
+      if (drawnLines.length === LEVELS[currentLevel].lines.length) {
+        setTimeout(() => {
+          document.getElementById("message").textContent = "🎉 完成了！";
+        }, 1000);
+      }
+    }
+
+    function flashRed() {
+      canvas.style.borderColor = "red";
+      setTimeout(() => canvas.style.borderColor = "#ccc", 150);
+      setTimeout(() => canvas.style.borderColor = "red", 300);
+      setTimeout(() => canvas.style.borderColor = "#ccc", 450);
+    }
+
+    renderButtons();
+  </script>
+</body>
+</html>
