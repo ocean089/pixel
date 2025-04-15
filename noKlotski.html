@@ -45,7 +45,7 @@
       font-size: 1.2em;
       color: green;
     }
-    #resetBtn, #startBtn {
+    #resetBtn, #startBtn, #solveBtn {
       margin-top: 10px;
       padding: 10px 20px;
       font-size: 1em;
@@ -76,6 +76,7 @@
     <option value="7">第8關</option>
   </select>
   <button id="startBtn">開始遊戲</button>
+  <button id="solveBtn">動畫解題</button>
 
   <div class="board" id="board"></div>
   <div id="message"></div>
@@ -90,6 +91,7 @@
     const record = document.getElementById('record');
     const resetBtn = document.getElementById('resetBtn');
     const startBtn = document.getElementById('startBtn');
+    const solveBtn = document.getElementById('solveBtn');
     const levelSelect = document.getElementById('levelSelect');
 
     let tiles = [];
@@ -97,7 +99,7 @@
     let levels = [
       [1, 2, 3, 4, 5, 6, 7, 8, null],
       [1, 2, 3, 4, 5, 6, null, 7, 8],
-      [1, 2, 3, 4, 5, 6, 8, 7, null],
+      [1, 2, 3, 4, 5, 6, null, 8, 7],
       [1, 2, 3, 4, 5, null, 6, 7, 8],
       [1, 2, 3, 4, 6, null, 7, 5, 8],
       [1, 2, 3, 6, null, 5, 4, 7, 8],
@@ -159,6 +161,22 @@
       }
     }
 
+    function animateSolve() {
+      if (currentLevel === 2) {
+        const steps = [7, 6, 8];
+        let stepIndex = 0;
+        let interval = setInterval(() => {
+          if (stepIndex >= steps.length) {
+            clearInterval(interval);
+            checkWin();
+            return;
+          }
+          moveTile(steps[stepIndex]);
+          stepIndex++;
+        }, 500);
+      }
+    }
+
     startBtn.addEventListener('click', () => {
       currentLevel = parseInt(levelSelect.value);
       initLevel(currentLevel);
@@ -167,6 +185,8 @@
     resetBtn.addEventListener('click', () => {
       initLevel(currentLevel);
     });
+
+    solveBtn.addEventListener('click', animateSolve);
   </script>
 </body>
 </html>
