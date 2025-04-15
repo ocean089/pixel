@@ -17,12 +17,14 @@
       position: relative;
       border: 2px solid #000;
       background: #fff;
+      touch-action: none;
     }
     .block {
       position: absolute;
       box-sizing: border-box;
       border: 1px solid #333;
       cursor: pointer;
+      touch-action: none;
     }
     .btns {
       margin-top: 20px;
@@ -46,7 +48,7 @@
     <strong>【遊戲規則】</strong>
     <ul>
       <li>將紅色的「曹操」滑塊移動到底部中間出口。</li>
-      <li>使用滑鼠拖曳滑塊移動（只能水平或垂直移動）。</li>
+      <li>使用滑鼠或手指拖曳滑塊移動（只能水平或垂直移動）。</li>
       <li>不能移出邊界，也不能重疊其他滑塊。</li>
     </ul>
   </div>
@@ -86,6 +88,7 @@
         div.style.backgroundColor = b.color;
         div.setAttribute("data-id", b.id);
         div.addEventListener("mousedown", (e) => startDrag(e, b));
+        div.addEventListener("touchstart", (e) => startTouch(e, b));
         board.appendChild(div);
       });
     }
@@ -114,6 +117,34 @@
       dragging = null;
       document.removeEventListener("mousemove", drag);
       document.removeEventListener("mouseup", stopDrag);
+    }
+
+    function startTouch(e, block) {
+      dragging = block;
+      const touch = e.touches[0];
+      const rect = e.target.getBoundingClientRect();
+      offsetX = touch.clientX - rect.left;
+      offsetY = touch.clientY - rect.top;
+      document.addEventListener("touchmove", touchMove);
+      document.addEventListener("touchend", stopTouch);
+    }
+
+    function touchMove(e) {
+      if (!dragging) return;
+      const touch = e.touches[0];
+      const newX = Math.round((touch.clientX - board.offsetLeft - offsetX) / CELL_SIZE);
+      const newY = Math.round((touch.clientY - board.offsetTop - offsetY) / CELL_SIZE);
+      if (newX < 0 || newX + dragging.w > 4 || newY < 0 || newY + dragging.h > 5) return;
+      dragging.x = newX;
+      dragging.y = newY;
+      createBlocks();
+      checkVictory();
+    }
+
+    function stopTouch() {
+      dragging = null;
+      document.removeEventListener("touchmove", touchMove);
+      document.removeEventListener("touchend", stopTouch);
     }
 
     function checkVictory() {
