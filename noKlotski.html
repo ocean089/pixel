@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>3x3 數字華容道</title>
   <style>
     body {
@@ -10,7 +10,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding-top: 40px;
+      padding: 20px;
       background: #f0f0f0;
     }
     h1 {
@@ -21,6 +21,7 @@
       grid-template-columns: repeat(3, 100px);
       grid-template-rows: repeat(3, 100px);
       gap: 5px;
+      margin-bottom: 10px;
     }
     .tile {
       width: 100px;
@@ -31,7 +32,7 @@
       justify-content: center;
       background-color: #ffffff;
       border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
       cursor: pointer;
       user-select: none;
     }
@@ -40,12 +41,12 @@
       cursor: default;
     }
     #message {
-      margin-top: 20px;
+      margin-top: 10px;
       font-size: 1.2em;
       color: green;
     }
-    #resetBtn {
-      margin-top: 20px;
+    #resetBtn, #startBtn {
+      margin-top: 10px;
       padding: 10px 20px;
       font-size: 1em;
       border: none;
@@ -54,25 +55,75 @@
       border-radius: 8px;
       cursor: pointer;
     }
+    #levelSelect {
+      margin-bottom: 10px;
+      font-size: 1em;
+    }
   </style>
 </head>
 <body>
-
   <h1>3x3 數字華容道</h1>
+
+  <label for="levelSelect">選擇關卡：</label>
+  <select id="levelSelect">
+    <option value="0">第1關</option>
+    <option value="1">第2關</option>
+    <option value="2">第3關</option>
+    <option value="3">第4關</option>
+    <option value="4">第5關</option>
+    <option value="5">第6關</option>
+    <option value="6">第7關</option>
+    <option value="7">第8關</option>
+  </select>
+  <button id="startBtn">開始遊戲</button>
+
   <div class="board" id="board"></div>
   <div id="message"></div>
+  <div id="timer">⏱️ 時間：0 秒</div>
+  <div id="record">通關次數：0</div>
   <button id="resetBtn">重新開始</button>
 
   <script>
     const board = document.getElementById('board');
     const message = document.getElementById('message');
+    const timer = document.getElementById('timer');
+    const record = document.getElementById('record');
     const resetBtn = document.getElementById('resetBtn');
-    let tiles = [];
+    const startBtn = document.getElementById('startBtn');
+    const levelSelect = document.getElementById('levelSelect');
 
-    function initBoard() {
+    let tiles = [];
+    let winState = [1, 2, 3, 4, 5, 6, 7, 8, null];
+    let levels = [
+      [1, 2, 3, 4, 5, 6, 7, 8, null],
+      [1, 2, 3, 4, 5, 6, null, 7, 8],
+      [1, 2, 3, 4, 5, 6, 8, 7, null],
+      [1, 2, 3, 4, 5, null, 6, 7, 8],
+      [1, 2, 3, 4, 6, null, 7, 5, 8],
+      [1, 2, 3, 6, null, 5, 4, 7, 8],
+      [1, 2, 6, null, 4, 3, 7, 5, 8],
+      [5, 1, 3, null, 2, 6, 4, 7, 8]
+    ];
+    let currentLevel = 0;
+    let moveCount = 0;
+    let startTime = 0;
+    let interval;
+    let passCount = 0;
+
+    function initLevel(levelIndex) {
+      clearInterval(interval);
       message.textContent = '';
-      tiles = shuffle([...Array(8).keys()].map(n => n + 1).concat(null));
+      moveCount = 0;
+      startTime = Date.now();
+      timer.textContent = '⏱️ 時間：0 秒';
+      tiles = [...levels[levelIndex]];
       renderBoard();
+      interval = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+      let seconds = Math.floor((Date.now() - startTime) / 1000);
+      timer.textContent = `⏱️ 時間：${seconds} 秒`;
     }
 
     function renderBoard() {
@@ -89,8 +140,8 @@
     function moveTile(index) {
       const emptyIndex = tiles.indexOf(null);
       const validMoves = [index - 3, index + 3];
-      if (index % 3 !== 0) validMoves.push(index - 1); // left
-      if (index % 3 !== 2) validMoves.push(index + 1); // right
+      if (index % 3 !== 0) validMoves.push(index - 1);
+      if (index % 3 !== 2) validMoves.push(index + 1);
 
       if (validMoves.includes(emptyIndex)) {
         [tiles[index], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[index]];
@@ -100,25 +151,22 @@
     }
 
     function checkWin() {
-      const winState = [1, 2, 3, 4, 5, 6, 7, 8, null];
       if (tiles.every((val, idx) => val === winState[idx])) {
+        clearInterval(interval);
+        passCount++;
+        record.textContent = `通關次數：${passCount}`;
         message.textContent = '🎉 完成了！';
       }
     }
 
-    function shuffle(array) {
-      let currentIndex = array.length, temp, randomIndex;
-      while (currentIndex !== 0) {
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex--;
-        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
-      }
-      return array;
-    }
+    startBtn.addEventListener('click', () => {
+      currentLevel = parseInt(levelSelect.value);
+      initLevel(currentLevel);
+    });
 
-    resetBtn.addEventListener('click', initBoard);
-    initBoard();
+    resetBtn.addEventListener('click', () => {
+      initLevel(currentLevel);
+    });
   </script>
-
 </body>
 </html>
