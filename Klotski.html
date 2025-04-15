@@ -1,0 +1,99 @@
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+
+const GRID_ROWS = 5;
+const GRID_COLS = 4;
+const CELL_SIZE = 80; // pixel
+
+// 初步設定角色滑塊類型與初始關卡資料
+const initialBlocks = [
+  { id: "caocao", x: 1, y: 0, w: 2, h: 2, color: "red" },
+  { id: "guard1", x: 0, y: 0, w: 1, h: 2, color: "blue" },
+  { id: "guard2", x: 3, y: 0, w: 1, h: 2, color: "blue" },
+  { id: "soldier1", x: 0, y: 2, w: 1, h: 1, color: "green" },
+  { id: "soldier2", x: 3, y: 2, w: 1, h: 1, color: "green" },
+  { id: "horz1", x: 1, y: 2, w: 2, h: 1, color: "orange" },
+];
+
+const isInsideGrid = (x, y) => x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS;
+
+const HuaRongDaoGame = () => {
+  const [blocks, setBlocks] = useState(initialBlocks);
+  const [dragging, setDragging] = useState(null);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  const onMouseDown = (e, block) => {
+    setDragging(block.id);
+    const rect = e.target.getBoundingClientRect();
+    setOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
+
+  const onMouseMove = (e) => {
+    if (!dragging) return;
+    const draggedBlock = blocks.find((b) => b.id === dragging);
+    if (!draggedBlock) return;
+
+    const newX = Math.round((e.clientX - offset.x) / CELL_SIZE);
+    const newY = Math.round((e.clientY - offset.y) / CELL_SIZE);
+
+    if (!isInsideGrid(newX, newY)) return;
+
+    setBlocks((prev) =>
+      prev.map((b) =>
+        b.id === dragging ? { ...b, x: newX, y: newY } : b
+      )
+    );
+  };
+
+  const onMouseUp = () => {
+    setDragging(null);
+  };
+
+  const isVictory = () => {
+    const caocao = blocks.find((b) => b.id === "caocao");
+    return caocao.x === 1 && caocao.y === 3;
+  };
+
+  useEffect(() => {
+    if (isVictory()) {
+      setTimeout(() => alert("🎉 通關成功！"), 100);
+    }
+  }, [blocks]);
+
+  return (
+    <div
+      className="relative"
+      style={{
+        width: GRID_COLS * CELL_SIZE,
+        height: GRID_ROWS * CELL_SIZE,
+        border: "2px solid black",
+        position: "relative",
+        margin: "auto",
+      }}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+    >
+      {blocks.map((b) => (
+        <div
+          key={b.id}
+          onMouseDown={(e) => onMouseDown(e, b)}
+          className="absolute cursor-pointer"
+          style={{
+            width: b.w * CELL_SIZE,
+            height: b.h * CELL_SIZE,
+            left: b.x * CELL_SIZE,
+            top: b.y * CELL_SIZE,
+            backgroundColor: b.color,
+            border: "1px solid #333",
+            boxSizing: "border-box",
+          }}
+        />
+      ))}
+      <div className="absolute bottom-[-50px] w-full flex justify-between">
+        <Button onClick={() => setBlocks(initialBlocks)}>重新開始</Button>
+      </div>
+    </div>
+  );
+};
+
+export default HuaRongDaoGame;
