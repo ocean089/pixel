@@ -27,10 +27,30 @@
     .btns {
       margin-top: 20px;
     }
+    .rules {
+      width: 90%;
+      max-width: 400px;
+      margin: 10px auto;
+      padding: 10px;
+      background-color: #fff3cd;
+      border: 1px solid #ffeeba;
+      border-radius: 5px;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
   <h1>華容道 - 第1關</h1>
+
+  <div class="rules">
+    <strong>【遊戲規則】</strong>
+    <ul>
+      <li>將紅色的「曹操」滑塊移動到底部中間出口。</li>
+      <li>使用滑鼠拖曳滑塊移動（只能水平或垂直移動）。</li>
+      <li>不能移出邊界，也不能重疊其他滑塊。</li>
+    </ul>
+  </div>
+
   <div id="game" class="board"></div>
   <div class="btns">
     <button onclick="resetBlocks()">重新開始</button>
