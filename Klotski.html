@@ -9,6 +9,9 @@
       font-family: sans-serif;
       text-align: center;
       background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      touch-action: none;
     }
     .board {
       width: 320px;
@@ -88,7 +91,7 @@
         div.style.backgroundColor = b.color;
         div.setAttribute("data-id", b.id);
         div.addEventListener("mousedown", (e) => startDrag(e, b));
-        div.addEventListener("touchstart", (e) => startTouch(e, b));
+        div.addEventListener("touchstart", (e) => startTouch(e, b), { passive: false });
         board.appendChild(div);
       });
     }
@@ -104,8 +107,8 @@
 
     function drag(e) {
       if (!dragging) return;
-      const newX = Math.round((e.clientX - board.offsetLeft - offsetX) / CELL_SIZE);
-      const newY = Math.round((e.clientY - board.offsetTop - offsetY) / CELL_SIZE);
+      const newX = Math.round((e.clientX - board.getBoundingClientRect().left - offsetX) / CELL_SIZE);
+      const newY = Math.round((e.clientY - board.getBoundingClientRect().top - offsetY) / CELL_SIZE);
       if (newX < 0 || newX + dragging.w > 4 || newY < 0 || newY + dragging.h > 5) return;
       dragging.x = newX;
       dragging.y = newY;
@@ -120,20 +123,22 @@
     }
 
     function startTouch(e, block) {
+      e.preventDefault();
       dragging = block;
       const touch = e.touches[0];
       const rect = e.target.getBoundingClientRect();
       offsetX = touch.clientX - rect.left;
       offsetY = touch.clientY - rect.top;
-      document.addEventListener("touchmove", touchMove);
+      document.addEventListener("touchmove", touchMove, { passive: false });
       document.addEventListener("touchend", stopTouch);
     }
 
     function touchMove(e) {
+      e.preventDefault();
       if (!dragging) return;
       const touch = e.touches[0];
-      const newX = Math.round((touch.clientX - board.offsetLeft - offsetX) / CELL_SIZE);
-      const newY = Math.round((touch.clientY - board.offsetTop - offsetY) / CELL_SIZE);
+      const newX = Math.round((touch.clientX - board.getBoundingClientRect().left - offsetX) / CELL_SIZE);
+      const newY = Math.round((touch.clientY - board.getBoundingClientRect().top - offsetY) / CELL_SIZE);
       if (newX < 0 || newX + dragging.w > 4 || newY < 0 || newY + dragging.h > 5) return;
       dragging.x = newX;
       dragging.y = newY;
