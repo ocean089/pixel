@@ -1,99 +1,114 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-
-const GRID_ROWS = 5;
-const GRID_COLS = 4;
-const CELL_SIZE = 80; // pixel
-
-// 初步設定角色滑塊類型與初始關卡資料
-const initialBlocks = [
-  { id: "caocao", x: 1, y: 0, w: 2, h: 2, color: "red" },
-  { id: "guard1", x: 0, y: 0, w: 1, h: 2, color: "blue" },
-  { id: "guard2", x: 3, y: 0, w: 1, h: 2, color: "blue" },
-  { id: "soldier1", x: 0, y: 2, w: 1, h: 1, color: "green" },
-  { id: "soldier2", x: 3, y: 2, w: 1, h: 1, color: "green" },
-  { id: "horz1", x: 1, y: 2, w: 2, h: 1, color: "orange" },
-];
-
-const isInsideGrid = (x, y) => x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS;
-
-const HuaRongDaoGame = () => {
-  const [blocks, setBlocks] = useState(initialBlocks);
-  const [dragging, setDragging] = useState(null);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-
-  const onMouseDown = (e, block) => {
-    setDragging(block.id);
-    const rect = e.target.getBoundingClientRect();
-    setOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  };
-
-  const onMouseMove = (e) => {
-    if (!dragging) return;
-    const draggedBlock = blocks.find((b) => b.id === dragging);
-    if (!draggedBlock) return;
-
-    const newX = Math.round((e.clientX - offset.x) / CELL_SIZE);
-    const newY = Math.round((e.clientY - offset.y) / CELL_SIZE);
-
-    if (!isInsideGrid(newX, newY)) return;
-
-    setBlocks((prev) =>
-      prev.map((b) =>
-        b.id === dragging ? { ...b, x: newX, y: newY } : b
-      )
-    );
-  };
-
-  const onMouseUp = () => {
-    setDragging(null);
-  };
-
-  const isVictory = () => {
-    const caocao = blocks.find((b) => b.id === "caocao");
-    return caocao.x === 1 && caocao.y === 3;
-  };
-
-  useEffect(() => {
-    if (isVictory()) {
-      setTimeout(() => alert("🎉 通關成功！"), 100);
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>華容道遊戲 - 第1關</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background-color: #f0f0f0;
     }
-  }, [blocks]);
+    .board {
+      width: 320px;
+      height: 400px;
+      margin: 20px auto;
+      position: relative;
+      border: 2px solid #000;
+      background: #fff;
+    }
+    .block {
+      position: absolute;
+      box-sizing: border-box;
+      border: 1px solid #333;
+      cursor: pointer;
+    }
+    .btns {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>華容道 - 第1關</h1>
+  <div id="game" class="board"></div>
+  <div class="btns">
+    <button onclick="resetBlocks()">重新開始</button>
+  </div>
 
-  return (
-    <div
-      className="relative"
-      style={{
-        width: GRID_COLS * CELL_SIZE,
-        height: GRID_ROWS * CELL_SIZE,
-        border: "2px solid black",
-        position: "relative",
-        margin: "auto",
-      }}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-    >
-      {blocks.map((b) => (
-        <div
-          key={b.id}
-          onMouseDown={(e) => onMouseDown(e, b)}
-          className="absolute cursor-pointer"
-          style={{
-            width: b.w * CELL_SIZE,
-            height: b.h * CELL_SIZE,
-            left: b.x * CELL_SIZE,
-            top: b.y * CELL_SIZE,
-            backgroundColor: b.color,
-            border: "1px solid #333",
-            boxSizing: "border-box",
-          }}
-        />
-      ))}
-      <div className="absolute bottom-[-50px] w-full flex justify-between">
-        <Button onClick={() => setBlocks(initialBlocks)}>重新開始</Button>
-      </div>
-    </div>
-  );
-};
+  <script>
+    const CELL_SIZE = 80;
+    const board = document.getElementById("game");
+    let dragging = null;
+    let offsetX = 0;
+    let offsetY = 0;
 
-export default HuaRongDaoGame;
+    const initialBlocks = [
+      { id: "caocao", x: 1, y: 0, w: 2, h: 2, color: "red" },
+      { id: "guard1", x: 0, y: 0, w: 1, h: 2, color: "blue" },
+      { id: "guard2", x: 3, y: 0, w: 1, h: 2, color: "blue" },
+      { id: "soldier1", x: 0, y: 2, w: 1, h: 1, color: "green" },
+      { id: "soldier2", x: 3, y: 2, w: 1, h: 1, color: "green" },
+      { id: "horz1", x: 1, y: 2, w: 2, h: 1, color: "orange" },
+    ];
+
+    let blocks = [];
+
+    function createBlocks() {
+      board.innerHTML = "";
+      blocks.forEach((b) => {
+        const div = document.createElement("div");
+        div.className = "block";
+        div.style.left = b.x * CELL_SIZE + "px";
+        div.style.top = b.y * CELL_SIZE + "px";
+        div.style.width = b.w * CELL_SIZE + "px";
+        div.style.height = b.h * CELL_SIZE + "px";
+        div.style.backgroundColor = b.color;
+        div.setAttribute("data-id", b.id);
+        div.addEventListener("mousedown", (e) => startDrag(e, b));
+        board.appendChild(div);
+      });
+    }
+
+    function startDrag(e, block) {
+      dragging = block;
+      const rect = e.target.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+      document.addEventListener("mousemove", drag);
+      document.addEventListener("mouseup", stopDrag);
+    }
+
+    function drag(e) {
+      if (!dragging) return;
+      const newX = Math.round((e.clientX - board.offsetLeft - offsetX) / CELL_SIZE);
+      const newY = Math.round((e.clientY - board.offsetTop - offsetY) / CELL_SIZE);
+      if (newX < 0 || newX + dragging.w > 4 || newY < 0 || newY + dragging.h > 5) return;
+      dragging.x = newX;
+      dragging.y = newY;
+      createBlocks();
+      checkVictory();
+    }
+
+    function stopDrag() {
+      dragging = null;
+      document.removeEventListener("mousemove", drag);
+      document.removeEventListener("mouseup", stopDrag);
+    }
+
+    function checkVictory() {
+      const caocao = blocks.find((b) => b.id === "caocao");
+      if (caocao.x === 1 && caocao.y === 3) {
+        setTimeout(() => alert("🎉 通關成功！"), 100);
+      }
+    }
+
+    function resetBlocks() {
+      blocks = JSON.parse(JSON.stringify(initialBlocks));
+      createBlocks();
+    }
+
+    resetBlocks();
+  </script>
+</body>
+</html>
