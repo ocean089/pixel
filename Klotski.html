@@ -107,7 +107,7 @@
     <div class="info-box">步數: <span id="step-count">0</span></div>
     <div class="info-box">時間: <span id="time-count">00:00</span></div>
     <button onclick="resetBlocks()">重新開始</button>
-    <button onclick="alert('將紅色的曹操滑塊移動到底部中間的出口。\n滑塊只能直線滑動，不能重疊或移出邊界。')">說明</button>
+    <button onclick="alert('將紅色的曹操滑塊移動到底部中間的出口。\n滑塊只能上下左右直線滑動，不能跳格，不能重疊，不能移出邊界。')">說明</button>
   </div>
 
   <div id="game" class="board">
@@ -147,6 +147,16 @@
 
     let blocks = [];
 
+    function isOverlapping(x, y, w, h, exceptId) {
+      return blocks.some(b => {
+        if (b.id === exceptId) return false;
+        return (
+          x < b.x + b.w && x + w > b.x &&
+          y < b.y + b.h && y + h > b.y
+        );
+      });
+    }
+
     function createBlocks() {
       board.querySelectorAll(".block").forEach((el) => el.remove());
       blocks.forEach((b) => {
@@ -164,6 +174,17 @@
       });
     }
 
+    function tryMove(block, newX, newY) {
+      if (
+        newX < 0 || newX + block.w > 4 ||
+        newY < 0 || newY + block.h > 5 ||
+        isOverlapping(newX, newY, block.w, block.h, block.id)
+      ) return false;
+      block.x = newX;
+      block.y = newY;
+      return true;
+    }
+
     function startDrag(e, block) {
       dragging = block;
       const rect = e.target.getBoundingClientRect();
@@ -175,15 +196,16 @@
 
     function drag(e) {
       if (!dragging) return;
-      const newX = Math.round((e.clientX - board.getBoundingClientRect().left - offsetX) / CELL_SIZE);
-      const newY = Math.round((e.clientY - board.getBoundingClientRect().top - offsetY) / CELL_SIZE);
-      if (newX < 0 || newX + dragging.w > 4 || newY < 0 || newY + dragging.h > 5) return;
-      dragging.x = newX;
-      dragging.y = newY;
-      steps++;
-      updateStepCount();
-      createBlocks();
-      checkVictory();
+      const dx = Math.round((e.clientX - board.getBoundingClientRect().left - offsetX) / CELL_SIZE);
+      const dy = Math.round((e.clientY - board.getBoundingClientRect().top - offsetY) / CELL_SIZE);
+      const newX = Math.min(Math.max(dragging.x + dx, 0), 4 - dragging.w);
+      const newY = Math.min(Math.max(dragging.y + dy, 0), 5 - dragging.h);
+      if (tryMove(dragging, newX, newY)) {
+        steps++;
+        updateStepCount();
+        createBlocks();
+        checkVictory();
+      }
     }
 
     function stopDrag() {
@@ -207,15 +229,16 @@
       e.preventDefault();
       if (!dragging) return;
       const touch = e.touches[0];
-      const newX = Math.round((touch.clientX - board.getBoundingClientRect().left - offsetX) / CELL_SIZE);
-      const newY = Math.round((touch.clientY - board.getBoundingClientRect().top - offsetY) / CELL_SIZE);
-      if (newX < 0 || newX + dragging.w > 4 || newY < 0 || newY + dragging.h > 5) return;
-      dragging.x = newX;
-      dragging.y = newY;
-      steps++;
-      updateStepCount();
-      createBlocks();
-      checkVictory();
+      const dx = Math.round((touch.clientX - board.getBoundingClientRect().left - offsetX) / CELL_SIZE);
+      const dy = Math.round((touch.clientY - board.getBoundingClientRect().top - offsetY) / CELL_SIZE);
+      const newX = Math.min(Math.max(dragging.x + dx, 0), 4 - dragging.w);
+      const newY = Math.min(Math.max(dragging.y + dy, 0), 5 - dragging.h);
+      if (tryMove(dragging, newX, newY)) {
+        steps++;
+        updateStepCount();
+        createBlocks();
+        checkVictory();
+      }
     }
 
     function stopTouch() {
