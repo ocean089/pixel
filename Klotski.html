@@ -1,40 +1,282 @@
-// 修正滑動異常：只允許單格移動，避免偏移跳躍
-function drag(e) {
-  if (!dragging) return;
-  const currentX = dragging.x;
-  const currentY = dragging.y;
-  const targetX = Math.round((e.clientX - board.getBoundingClientRect().left - offsetX) / CELL_SIZE);
-  const targetY = Math.round((e.clientY - board.getBoundingClientRect().top - offsetY) / CELL_SIZE);
-  const dx = targetX - currentX;
-  const dy = targetY - currentY;
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>康樂國小 華容道 低年級版</title>
+  <style>
+    body {
+      font-family: "Noto Sans TC", sans-serif;
+      background-color: #eef5fb;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    h1 {
+      color: #2b57a3;
+      margin-top: 20px;
+    }
+    .info-bar {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .info-box {
+      background-color: #fff;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-weight: bold;
+      color: #5b5b5b;
+    }
+    .board {
+      width: 320px;
+      height: 400px;
+      margin: 20px auto;
+      position: relative;
+      border: 8px solid #8b4513;
+      border-radius: 10px;
+      background: #faedcd;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+      touch-action: none;
+    }
+    .block {
+      position: absolute;
+      box-sizing: border-box;
+      border: 2px solid #333;
+      border-radius: 6px;
+      touch-action: none;
+    }
+    .exit-label {
+      position: absolute;
+      bottom: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #f8a5b0;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .btns {
+      margin-top: 10px;
+    }
+    button {
+      background-color: #f8aa34;
+      border: none;
+      padding: 8px 14px;
+      margin: 4px;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #f89a00;
+    }
+    .level-select {
+      margin-top: 20px;
+    }
+    .level-select span {
+      margin-right: 8px;
+      font-weight: bold;
+    }
+    .level-btn {
+      background-color: #ccc;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      margin: 2px;
+      font-weight: bold;
+      color: white;
+    }
+    .level-btn.active {
+      background-color: #3f85f4;
+    }
+  </style>
+</head>
+<body>
+  <h1>康樂國小 華容道 低年級版</h1>
 
-  // 限制只移動一格
-  if (Math.abs(dx) + Math.abs(dy) !== 1) return;
-  if (tryMove(dragging, targetX, targetY)) {
-    steps++;
-    updateStepCount();
-    createBlocks();
-    checkVictory();
-  }
-}
+  <div class="info-bar">
+    <div class="info-box">第 <span id="level-number">1</span> 關</div>
+    <div class="info-box">步數: <span id="step-count">0</span></div>
+    <div class="info-box">時間: <span id="time-count">00:00</span></div>
+    <button onclick="resetBlocks()">重新開始</button>
+    <button onclick="alert('將紅色的曹操滑塊移動到底部中間的出口。\n滑塊只能上下左右直線滑動，不能跳格，不能重疊，不能移出邊界。')">說明</button>
+  </div>
 
-function touchMove(e) {
-  e.preventDefault();
-  if (!dragging) return;
-  const touch = e.touches[0];
-  const currentX = dragging.x;
-  const currentY = dragging.y;
-  const targetX = Math.round((touch.clientX - board.getBoundingClientRect().left - offsetX) / CELL_SIZE);
-  const targetY = Math.round((touch.clientY - board.getBoundingClientRect().top - offsetY) / CELL_SIZE);
-  const dx = targetX - currentX;
-  const dy = targetY - currentY;
+  <div id="game" class="board">
+    <div class="exit-label">出口</div>
+  </div>
 
-  // 限制只移動一格
-  if (Math.abs(dx) + Math.abs(dy) !== 1) return;
-  if (tryMove(dragging, targetX, targetY)) {
-    steps++;
-    updateStepCount();
-    createBlocks();
-    checkVictory();
-  }
-}
+  <div class="level-select">
+    <span>選擇關卡:</span>
+    <button class="level-btn active">1</button>
+    <button class="level-btn">2</button>
+    <button class="level-btn">3</button>
+    <button class="level-btn">4</button>
+    <button class="level-btn">5</button>
+    <button class="level-btn">6</button>
+    <button class="level-btn">7</button>
+    <button class="level-btn">8</button>
+  </div>
+
+  <script>
+    const CELL_SIZE = 80;
+    const board = document.getElementById("game");
+    let dragging = null;
+    let offsetX = 0;
+    let offsetY = 0;
+    let steps = 0;
+    let startTime = null;
+    let timerInterval = null;
+
+    const initialBlocks = [
+      { id: "caocao", x: 1, y: 0, w: 2, h: 2, color: "red" },
+      { id: "guard1", x: 0, y: 0, w: 1, h: 2, color: "blue" },
+      { id: "guard2", x: 3, y: 0, w: 1, h: 2, color: "blue" },
+      { id: "soldier1", x: 0, y: 2, w: 1, h: 1, color: "green" },
+      { id: "soldier2", x: 3, y: 2, w: 1, h: 1, color: "green" },
+      { id: "horz1", x: 1, y: 2, w: 2, h: 1, color: "orange" },
+    ];
+
+    let blocks = [];
+
+    function isOverlapping(x, y, w, h, exceptId) {
+      return blocks.some(b => {
+        if (b.id === exceptId) return false;
+        return (
+          x < b.x + b.w && x + w > b.x &&
+          y < b.y + b.h && y + h > b.y
+        );
+      });
+    }
+
+    function createBlocks() {
+      board.querySelectorAll(".block").forEach((el) => el.remove());
+      blocks.forEach((b) => {
+        const div = document.createElement("div");
+        div.className = "block";
+        div.style.left = b.x * CELL_SIZE + "px";
+        div.style.top = b.y * CELL_SIZE + "px";
+        div.style.width = b.w * CELL_SIZE + "px";
+        div.style.height = b.h * CELL_SIZE + "px";
+        div.style.backgroundColor = b.color;
+        div.setAttribute("data-id", b.id);
+        div.addEventListener("mousedown", (e) => startDrag(e, b));
+        div.addEventListener("touchstart", (e) => startTouch(e, b), { passive: false });
+        board.appendChild(div);
+      });
+    }
+
+    function tryMove(block, newX, newY) {
+      if (
+        newX < 0 || newX + block.w > 4 ||
+        newY < 0 || newY + block.h > 5 ||
+        isOverlapping(newX, newY, block.w, block.h, block.id)
+      ) return false;
+      block.x = newX;
+      block.y = newY;
+      return true;
+    }
+
+    function drag(e) {
+      if (!dragging) return;
+      const currentX = dragging.x;
+      const currentY = dragging.y;
+      const targetX = Math.round((e.clientX - board.getBoundingClientRect().left - offsetX) / CELL_SIZE);
+      const targetY = Math.round((e.clientY - board.getBoundingClientRect().top - offsetY) / CELL_SIZE);
+      const dx = targetX - currentX;
+      const dy = targetY - currentY;
+
+      if (Math.abs(dx) + Math.abs(dy) !== 1) return;
+      if (tryMove(dragging, targetX, targetY)) {
+        steps++;
+        updateStepCount();
+        createBlocks();
+        checkVictory();
+      }
+    }
+
+    function stopDrag() {
+      dragging = null;
+      document.removeEventListener("mousemove", drag);
+      document.removeEventListener("mouseup", stopDrag);
+    }
+
+    function startTouch(e, block) {
+      e.preventDefault();
+      dragging = block;
+      const touch = e.touches[0];
+      const rect = e.target.getBoundingClientRect();
+      offsetX = touch.clientX - rect.left;
+      offsetY = touch.clientY - rect.top;
+      document.addEventListener("touchmove", touchMove, { passive: false });
+      document.addEventListener("touchend", stopTouch);
+    }
+
+    function touchMove(e) {
+      e.preventDefault();
+      if (!dragging) return;
+      const touch = e.touches[0];
+      const currentX = dragging.x;
+      const currentY = dragging.y;
+      const targetX = Math.round((touch.clientX - board.getBoundingClientRect().left - offsetX) / CELL_SIZE);
+      const targetY = Math.round((touch.clientY - board.getBoundingClientRect().top - offsetY) / CELL_SIZE);
+      const dx = targetX - currentX;
+      const dy = targetY - currentY;
+
+      if (Math.abs(dx) + Math.abs(dy) !== 1) return;
+      if (tryMove(dragging, targetX, targetY)) {
+        steps++;
+        updateStepCount();
+        createBlocks();
+        checkVictory();
+      }
+    }
+
+    function stopTouch() {
+      dragging = null;
+      document.removeEventListener("touchmove", touchMove);
+      document.removeEventListener("touchend", stopTouch);
+    }
+
+    function updateStepCount() {
+      document.getElementById("step-count").textContent = steps;
+    }
+
+    function updateTime() {
+      const seconds = Math.floor((Date.now() - startTime) / 1000);
+      const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const secs = String(seconds % 60).padStart(2, '0');
+      document.getElementById("time-count").textContent = `${mins}:${secs}`;
+    }
+
+    function checkVictory() {
+      const caocao = blocks.find((b) => b.id === "caocao");
+      if (caocao.x === 1 && caocao.y === 3) {
+        clearInterval(timerInterval);
+        setTimeout(() => alert("🎉 通關成功！"), 100);
+      }
+    }
+
+    function resetBlocks() {
+      blocks = JSON.parse(JSON.stringify(initialBlocks));
+      steps = 0;
+      updateStepCount();
+      startTime = Date.now();
+      clearInterval(timerInterval);
+      timerInterval = setInterval(updateTime, 1000);
+      updateTime();
+      createBlocks();
+    }
+
+    resetBlocks();
+  </script>
+</body>
+</html>
