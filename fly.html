@@ -84,13 +84,19 @@
     <button class="button" onclick="loadLevel(4)">第四關：層層包圍</button>
   <button class="button" onclick="loadLevel(5)">第五關：橫刀立馬</button>
   <button class="button" onclick="loadLevel(6)">第六關：指揮若定</button>
-  </div>
-  <div id="game" style="display:none;">
+  <button class="button" onclick="loadLevel(7)">第七關：將擒曹營</button>
+  <button class="button" onclick="loadLevel(8)">第八關：桃花園中</button>
+    <button class="button" onclick="loadLevel(9)">第九關：一路進軍</button>
+    <button class="button" onclick="loadLevel(10)">第十關：插翅難飛</button>
+$1 style="display:none;">
     <h2 id="level-indicator"></h2>
     <div id="board">
       <div id="exit">出口</div>
     </div>
     <p id="steps">移動步數：0</p>
+    <p id="time">使用時間：0 秒</p>
+    <p id="stars">星星評價：⭐</p>
+    <p id="record">最佳紀錄：步數 --，時間 -- 秒</p>
     <button class="button" onclick="resetGame()">重新開始</button>
     <button class="button" onclick="location.reload()">回首頁</button>
   </div>
@@ -103,6 +109,54 @@
     let initialPositions = [];
 
     const levels = {
+      8: [
+        { id: "s1", class: "soldier", x: 0, y: 0, w: 1, h: 1 },
+        { id: "cao", class: "cao", x: 1, y: 0, w: 2, h: 2 },
+        { id: "s2", class: "soldier", x: 3, y: 0, w: 1, h: 1 },
+        { id: "zhao", class: "general", x: 0, y: 1, w: 1, h: 2 },
+        { id: "zhang", class: "general", x: 3, y: 1, w: 1, h: 2 },
+        { id: "s3", class: "soldier", x: 0, y: 3, w: 1, h: 1 },
+        { id: "huang", class: "general", x: 1, y: 2, w: 1, h: 2 },
+        { id: "ma", class: "general", x: 2, y: 2, w: 1, h: 2 },
+        { id: "s4", class: "soldier", x: 3, y: 3, w: 1, h: 1 },
+        { id: "guan", class: "guan", x: 1, y: 4, w: 2, h: 1 },
+      ],
+      9: [
+        { id: "zhao", class: "general", x: 0, y: 0, w: 1, h: 2 },
+        { id: "cao", class: "cao", x: 1, y: 0, w: 2, h: 2 },
+        { id: "s1", class: "soldier", x: 3, y: 0, w: 1, h: 1 },
+        { id: "s2", class: "soldier", x: 3, y: 1, w: 1, h: 1 },
+        { id: "zhang", class: "general", x: 0, y: 2, w: 1, h: 2 },
+        { id: "huang", class: "general", x: 1, y: 2, w: 1, h: 2 },
+        { id: "ma", class: "general", x: 2, y: 2, w: 1, h: 2 },
+        { id: "s3", class: "soldier", x: 3, y: 2, w: 1, h: 1 },
+        { id: "s4", class: "soldier", x: 3, y: 3, w: 1, h: 1 },
+        { id: "guan", class: "guan", x: 1, y: 4, w: 2, h: 1 },
+      ],
+      10: [
+        { id: "zhang", class: "general", x: 0, y: 0, w: 1, h: 2 },
+        { id: "cao", class: "cao", x: 1, y: 0, w: 2, h: 2 },
+        { id: "s1", class: "soldier", x: 3, y: 0, w: 1, h: 1 },
+        { id: "s2", class: "soldier", x: 3, y: 1, w: 1, h: 1 },
+        { id: "zhao", class: "general", x: 0, y: 2, w: 1, h: 1 },
+        { id: "s3", class: "soldier", x: 2, y: 2, w: 1, h: 1 },
+        { id: "s4", class: "soldier", x: 3, y: 2, w: 1, h: 1 },
+        { id: "huang", class: "general", x: 0, y: 3, w: 1, h: 2 },
+        { id: "ma", class: "general", x: 3, y: 3, w: 1, h: 2 },
+        { id: "guan", class: "guan", x: 1, y: 3, w: 2, h: 1 },
+      ],
+      7: [
+        { id: "cao", class: "cao", x: 1, y: 0, w: 2, h: 2 },
+        { id: "zhao", class: "general", x: 0, y: 0, w: 1, h: 2 },
+        { id: "zhang", class: "general", x: 3, y: 0, w: 1, h: 2 },
+        { id: "s1", class: "soldier", x: 0, y: 2, w: 1, h: 1 },
+        { id: "guan", class: "guan", x: 1, y: 2, w: 1, h: 1 },
+        { id: "s2", class: "soldier", x: 3, y: 2, w: 1, h: 1 },
+        { id: "huang", class: "general", x: 0, y: 3, w: 1, h: 2 },
+        { id: "s3", class: "soldier", x: 1, y: 3, w: 1, h: 1 },
+        { id: "s4", class: "soldier", x: 2, y: 3, w: 1, h: 1 },
+        { id: "ma", class: "general", x: 3, y: 3, w: 1, h: 2 },
+      ],
       6: [
         { id: "zhao", class: "general", x: 0, y: 0, w: 1, h: 2 },
         { id: "cao", class: "cao", x: 1, y: 0, w: 2, h: 2 },
@@ -245,6 +299,16 @@
     }
 
     function updateBoard() {
+      const now = Math.floor((Date.now() - startTime) / 1000);
+      document.getElementById("time").innerText = `使用時間：${now} 秒`;
+      const stars = steps <= 40 && now <= 60 ? '⭐⭐⭐' : steps <= 60 ? '⭐⭐' : '⭐';
+      document.getElementById("stars").innerText = `星星評價：${stars}`;
+      const levelKey = JSON.stringify(initialPositions);
+      const record = bestRecords[levelKey];
+      if (record) {
+        document.getElementById("record").innerText = `最佳紀錄：步數 ${record.steps}，時間 ${record.time} 秒`;
+      }
+
       for (let b of blocks) {
         const el = document.getElementById(b.id);
         el.style.gridColumnStart = b.x + 1;
