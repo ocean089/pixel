@@ -95,7 +95,7 @@ $1 style="display:none;">
     </div>
     <p id="steps">移動步數：0</p>
     <p id="time">使用時間：0 秒</p>
-    <p id="stars">星星評價：⭐</p>
+    <p id="stars" style="font-size: 24px; color: gold;">星星評價：⭐</p>
     <p id="record">最佳紀錄：步數 --，時間 -- 秒</p>
     <button class="button" onclick="resetGame()">重新開始</button>
     <button class="button" onclick="location.reload()">回首頁</button>
@@ -355,10 +355,62 @@ function checkWin() {
     localStorage.setItem('bestRecords', JSON.stringify(bestRecords));
 
     const stars = steps <= 40 && endTime <= 60 ? '⭐⭐⭐' : steps <= 60 ? '⭐⭐' : '⭐';
-    setTimeout(() => alert(`🎉 成功解救曹操！
-總步數：${steps}
-時間：${endTime}秒
-${stars}`), 200);
+    const audio = new Audio('https://cdn.pixabay.com/download/audio/2022/03/15/audio_252bbcfdb5.mp3?filename=success-fanfare-trumpets-6185.mp3');
+    audio.play();
+    setTimeout(() => {
+      // ✅ 顯示完成畫面與總覽統計
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.width = '100%';
+      container.style.height = '100%';
+      container.style.background = 'rgba(0, 0, 0, 0.85)';
+      container.style.color = 'white';
+      container.style.display = 'flex';
+      container.style.flexDirection = 'column';
+      container.style.justifyContent = 'center';
+      container.style.alignItems = 'center';
+      container.style.zIndex = '9999';
+
+      const msg = document.createElement('div');
+      msg.innerHTML = `<h2 style='margin-bottom:10px;'>🎉 成功解救曹操！</h2>
+      <p>總步數：${steps}</p>
+      <p>時間：${endTime} 秒</p>
+      <p style='font-size:24px; color: gold;'>星星評價：${stars}</p>`;
+
+      const summary = document.createElement('div');
+      summary.innerHTML = '<h3>⭐ 關卡成績總覽：</h3>';
+      let html = '<table style="border-collapse:collapse; margin-top:10px; color:white;">';
+      html += '<tr><th style="padding:4px;">關卡</th><th style="padding:4px;">步數</th><th style="padding:4px;">時間</th></tr>';
+      let index = 1;
+      for (const key of Object.keys(levels)) {
+        const rec = bestRecords[JSON.stringify(levels[key])];
+        if (!rec) continue;
+        html += `<tr><td style='padding:4px;'>第 ${index++} 關</td><td style='padding:4px;'>${rec.steps}</td><td style='padding:4px;'>${rec.time} 秒</td></tr>`;
+      }
+      html += '</table>';
+      summary.innerHTML += html;
+
+      const btn = document.createElement('button');
+      btn.innerText = '返回首頁';
+      btn.className = 'button';
+      btn.style.marginTop = '20px';
+      btn.onclick = () => location.reload();
+
+      container.appendChild(msg);
+      container.appendChild(summary);
+      container.appendChild(btn);
+      document.body.appendChild(container);
+    }, 300);
+      const nextLevel = Object.keys(levels).findIndex(k => JSON.stringify(levels[k]) === levelKey) + 2;
+      if (levels[nextLevel]) {
+        loadLevel(nextLevel);
+      } else {
+        alert('🎊 全部關卡完成！');
+        location.reload();
+      }
+    }, 300);
   }
 }
 
