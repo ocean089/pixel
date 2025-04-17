@@ -83,6 +83,7 @@
     <button class="button" onclick="loadLevel(3)">第三關：處處設防</button>
     <button class="button" onclick="loadLevel(4)">第四關：層層包圍</button>
   <button class="button" onclick="loadLevel(5)">第五關：橫刀立馬</button>
+  <button class="button" onclick="loadLevel(6)">第六關：指揮若定</button>
   </div>
   <div id="game" style="display:none;">
     <h2 id="level-indicator"></h2>
@@ -102,6 +103,18 @@
     let initialPositions = [];
 
     const levels = {
+      6: [
+        { id: "zhao", class: "general", x: 0, y: 0, w: 1, h: 2 },
+        { id: "cao", class: "cao", x: 1, y: 0, w: 2, h: 2 },
+        { id: "zhang", class: "general", x: 3, y: 0, w: 1, h: 2 },
+        { id: "s1", class: "soldier", x: 0, y: 2, w: 1, h: 1 },
+        { id: "guan", class: "guan", x: 1, y: 2, w: 2, h: 1 },
+        { id: "s2", class: "soldier", x: 3, y: 2, w: 1, h: 1 },
+        { id: "huang", class: "general", x: 0, y: 3, w: 1, h: 2 },
+        { id: "s3", class: "soldier", x: 1, y: 3, w: 1, h: 1 },
+        { id: "s4", class: "soldier", x: 2, y: 3, w: 1, h: 1 },
+        { id: "ma", class: "general", x: 3, y: 3, w: 1, h: 2 },
+      ],
       5: [
         { id: "s1", class: "soldier", x: 0, y: 0, w: 1, h: 1 },
         { id: "s2", class: "soldier", x: 0, y: 1, w: 1, h: 1 },
