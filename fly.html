@@ -76,7 +76,7 @@
   </style>
 </head>
 <body>
-  <h1>三國華容道</h1>
+  <h1>飛出宇宙:康樂版</h1>
   <div id="menu">
     <button class="button" onclick="loadLevel(1)">第一關：一夫當關</button>
     <button class="button" onclick="loadLevel(2)">第二關：小卒擋道</button>
@@ -84,6 +84,7 @@
     <button class="button" onclick="loadLevel(4)">第四關：層層包圍</button>
   </div>
   <div id="game" style="display:none;">
+    <h2 id="level-indicator"></h2>
     <div id="board">
       <div id="exit">出口</div>
     </div>
@@ -151,6 +152,7 @@
     };
 
     function loadLevel(level) {
+      document.getElementById("level-indicator").innerText = `第 ${level} 關`;
       blocks = JSON.parse(JSON.stringify(levels[level]));
       initialPositions = blocks.map(b => ({ id: b.id, x: b.x, y: b.y }));
       document.getElementById("menu").style.display = "none";
@@ -246,6 +248,44 @@
       });
       blocks.forEach(createBlock);
     }
-  </script>
+  let startTime = 0;
+let bestRecords = JSON.parse(localStorage.getItem('bestRecords') || '{}');
+
+function checkWin() {
+  const cao = blocks.find(b => b.id === "cao");
+  if (cao.x === 1 && cao.y === 3) {
+    gameFinished = true;
+    board.style.opacity = "0.5";
+    const endTime = Math.floor((Date.now() - startTime) / 1000);
+    const levelKey = JSON.stringify(initialPositions);
+    let record = bestRecords[levelKey] || { steps: Infinity, time: Infinity };
+    if (steps < record.steps) record.steps = steps;
+    if (endTime < record.time) record.time = endTime;
+    bestRecords[levelKey] = record;
+    localStorage.setItem('bestRecords', JSON.stringify(bestRecords));
+
+    const stars = steps <= 40 && endTime <= 60 ? '⭐⭐⭐' : steps <= 60 ? '⭐⭐' : '⭐';
+    setTimeout(() => alert(`🎉 成功解救曹操！
+總步數：${steps}
+時間：${endTime}秒
+${stars}`), 200);
+  }
+}
+
+function resetGame() {
+  board.innerHTML = "<div id=\"exit\">出口</div>";
+  steps = 0;
+  gameFinished = false;
+  board.style.opacity = "1";
+  stepsDisplay.innerText = "移動步數：0";
+  startTime = Date.now();
+  blocks.forEach(b => {
+    const init = initialPositions.find(p => p.id === b.id);
+    b.x = init.x;
+    b.y = init.y;
+  });
+  blocks.forEach(createBlock);
+}
+</script>
 </body>
 </html>
