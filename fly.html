@@ -226,13 +226,13 @@ const levels = {
     { id: "cao", class: "cao", x: 1, y: 0, w: 2, h: 2 },
     { id: "zhao", class: "general", x: 0, y: 0, w: 1, h: 2 },
     { id: "zhang", class: "general", x: 3, y: 0, w: 1, h: 2 },
+    { id: "huang", class: "general", x: 1, y: 2, w: 1, h: 1 },
+    { id: "ma", class: "general", x: 2, y: 2, w: 1, h: 1 },
     { id: "s1", class: "soldier", x: 0, y: 2, w: 1, h: 1 },
-    { id: "guan", class: "guan", x: 1, y: 2, w: 1, h: 1 },
     { id: "s2", class: "soldier", x: 3, y: 2, w: 1, h: 1 },
-    { id: "huang", class: "general", x: 0, y: 3, w: 1, h: 2 },
+    { id: "guan", class: "guan", x: 0, y: 3, w: 1, h: 1 },
     { id: "s3", class: "soldier", x: 1, y: 3, w: 1, h: 1 },
-    { id: "s4", class: "soldier", x: 2, y: 3, w: 1, h: 1 },
-    { id: "ma", class: "general", x: 3, y: 3, w: 1, h: 2 },
+    { id: "s4", class: "soldier", x: 2, y: 3, w: 1, h: 1 }
   ],
   8: [
     { id: "s1", class: "soldier", x: 0, y: 0, w: 1, h: 1 },
@@ -345,7 +345,10 @@ const levels = {
 };
 function checkWin() {
   const cao = blocks.find(b => b.id === "cao");
-  if (cao && cao.y + cao.h === 5) {
+  const exit = document.getElementById("exit");
+  const exitRow = 4;
+  const exitCol = Math.floor(exit.offsetLeft / (board.offsetWidth / 4));
+  if (cao && cao.y + cao.h === 5 && (cao.x === exitCol || cao.x + cao.w - 1 === exitCol)) {
     gameFinished = true;
     const endTime = Math.floor((Date.now() - startTime) / 1000);
     const stars = steps <= 40 && endTime <= 60 ? '⭐⭐⭐' : steps <= 60 ? '⭐⭐' : '⭐';
@@ -376,7 +379,7 @@ function checkWin() {
       container.style.zIndex = '9999';
 
       const msg = document.createElement('div');
-      msg.innerHTML = `<h2 style='margin-bottom:10px;'>🎉 成功解救曹操！</h2>
+      msg.innerHTML = `<h2 style='margin-bottom:10px;'>🎉 成功飛出宇宙！</h2>
         <p>總步數：${steps}</p>
         <p>時間：${endTime} 秒</p>
         <p style='font-size:24px; color: gold;'>星星評價：${stars}</p>`;
