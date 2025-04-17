@@ -1,58 +1,61 @@
 
-<!-- trimmed for demonstration; only showing corrected snippets -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <title>康樂國小 華容道 低年級版</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>康樂國小 華容道 低年級版</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <!-- content omitted for brevity -->
-    <script>
-        function createLevelButtons() {
-            levelSelector.innerHTML = '';
-            for (let i = 1; i <= levels.length; i++) {
-                const button = document.createElement('button');
-                button.textContent = i;
-                button.classList.add('level-button');
-                if (i === state.currentLevel) {
-                    button.classList.add('current');
-                } else if (state.completedLevels[i]) {
-                    button.classList.add('completed');
-                } else if (i > 1 && !state.completedLevels[i - 1] && i !== state.currentLevel) {
-                    button.classList.add('locked');
-                } else {
-                    button.classList.add('bg-gray-200');
-                }
+<body class="bg-blue-50">
+  <div class="min-h-screen flex flex-col items-center py-8 px-4">
+    <h1 class="text-3xl font-bold text-center mb-4 text-blue-800">康樂國小 華容道 低年級版</h1>
+    <div id="game-content" class="text-gray-700 font-medium">遊戲初始化中...</div>
+  </div>
 
-                if (!button.classList.contains('locked')) {
-                    button.addEventListener('click', () => loadLevel(i));
-                }
+  <script>
+    const state = {
+      currentLevel: 1,
+      completedLevels: { 1: true, 2: true },
+      bestMoves: { 1: 5, 2: 8 },
+      bestTimes: { 1: 42000, 2: 52000 }
+    };
+    const levelSelector = document.createElement('div');
 
-                if (state.bestTimes[i] || state.bestMoves[i]) {
-                    const tooltip = document.createElement('div');
-                    tooltip.classList.add('level-stats');
-                    if (state.bestMoves[i]) {
-                        const movesItem = document.createElement('div');
-                        movesItem.classList.add('level-stats-item');
-                        movesItem.innerHTML = `<span class="level-stats-icon">👣</span>${state.bestMoves[i]}`;
-                        tooltip.appendChild(movesItem);
-                    }
+    function formatTime(ms) {
+      const total = Math.floor(ms / 1000);
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      return \`\${m.toString().padStart(2, '0')}:\${s.toString().padStart(2, '0')}\`;
+    }
 
-                    if (state.bestTimes[i]) {
-                        const timeItem = document.createElement('div');
-                        timeItem.classList.add('level-stats-item');
-                        timeItem.innerHTML = `<span class="level-stats-icon">⏱️</span>${formatTime(state.bestTimes[i])}`;
-                        tooltip.appendChild(timeItem);
-                    }
-
-                    button.title = `最佳記錄: ${state.bestMoves[i] || '?'} 步, ${state.bestTimes[i] ? formatTime(state.bestTimes[i]) : '?'} 秒`;
-                }
-
-                levelSelector.appendChild(button);
-            }
+    function createLevelButtons() {
+      for (let i = 1; i <= 5; i++) {
+        const button = document.createElement('button');
+        button.textContent = i;
+        button.className = "border border-gray-400 rounded-full w-10 h-10 mx-1";
+        if (i === state.currentLevel) {
+          button.classList.add('bg-blue-500', 'text-white');
         }
-    </script>
+        if (state.bestMoves[i]) {
+          const info = document.createElement('div');
+          info.className = "text-xs mt-1";
+          info.innerHTML = \`
+            <div class="level-stats-item"><span class="level-stats-icon">👣</span>\${state.bestMoves[i]}</div>
+            <div class="level-stats-item"><span class="level-stats-icon">⏱️</span>\${formatTime(state.bestTimes[i])}</div>
+          \`;
+          button.appendChild(info);
+        }
+        levelSelector.appendChild(button);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('game-content').textContent = '';
+      levelSelector.className = "flex justify-center mt-4";
+      createLevelButtons();
+      document.getElementById('game-content').appendChild(levelSelector);
+    });
+  </script>
 </body>
 </html>
