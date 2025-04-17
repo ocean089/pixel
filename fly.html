@@ -404,9 +404,14 @@ function checkWin() {
       container.appendChild(btn);
       document.body.appendChild(container);
     }, 300);
-      const nextLevel = Object.keys(levels).findIndex(k => JSON.stringify(levels[k]) === levelKey) + 2;
-      if (levels[nextLevel]) {
+      const currentIndex = levelOrder.indexOf(level);
+      const nextLevel = levelOrder[currentIndex + 1];
+      if (nextLevel) {
         loadLevel(nextLevel);
+      } else {
+        alert('🎊 全部關卡完成！');
+        location.reload();
+      }
       } else {
         alert('🎊 全部關卡完成！');
         location.reload();
@@ -429,6 +434,16 @@ function resetGame() {
   });
   blocks.forEach(createBlock);
 }
+const levelOrder = [1,2,3,4,5,6,7,8,9,10];
+
+function getCurrentLevelIndex() {
+  return levelOrder.findIndex(lvl => {
+    const a = JSON.stringify(levels[lvl]);
+    const b = JSON.stringify(initialPositions.map(b => ({ id: b.id, x: b.x, y: b.y })));
+    return a === b;
+  });
+}
+
 </script>
 </body>
 </html>
