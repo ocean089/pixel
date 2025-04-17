@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>康樂國小 華容道 低年級版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            background-color: #f0f9ff;
+            overflow: hidden;
+        }
+        
+        .game-board {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 4/5;
+            background-color: #fef3c7;
+            border: 8px solid #92400e;
+            border-radius: 12px;
+            box-shadow: 0 8px 0 #78350f, 0 10px 20px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .block {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.4), 0 4px 0 rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .block.hero {
+            background-color: #ef4444;
+            z-index: 10;
+        }
+        
+        .block.vertical {
+            background-color: #3b82f6;
+        }
+        
+        .block.horizontal {
+            background-color: #10b981;
+        }
+        
+        .block.small {
+            background-color: #f59e0b;
+        }
+        
+        .exit {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 20px;
+            background-color: #f87171;
+            border-radius: 8px 8px 0 0;
+            box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4);
+        }
+        
+        .exit::after {
+            content: "出口";
+            position: absolute;
+            bottom: 2px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: fall 3s ease-out forwards;
+        }
+        
+        @keyframes fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .level-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .level-button:hover {
+            transform: scale(1.1);
+        }
+        
+        .level-button.completed {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .level-button.current {
+            background-color: #3b82f6;
+            color: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+        
+        .level-button.locked {
+            background-color: #d1d5db;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .moves-counter, .timer-display {
+            background-color: #fef3c7;
+            border: 3px solid #92400e;
+            border-radius: 8px;
+            padding: 5px 15px;
+            font-weight: bold;
+            color: #92400e;
+            box-shadow: 0 3px 0 #78350f;
+        }
+        
+        .btn {
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .tutorial-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .tutorial-content {
+            background-color: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 90%;
+            width: 500px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .block-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            display: inline-block;
+            margin: 0 5px;
+            vertical-align: middle;
+        }
+        
+        .win-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .win-content {
+            background-color: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 90%;
+            width: 320px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        
+        .star {
+            display: inline-block;
+            font-size: 32px;
+            color: #d1d5db;
+            margin: 0 5px;
+        }
+        
+        .star.earned {
+            color: #fbbf24;
+            animation: bounce 0.5s ease;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        .character {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .level-stats {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 8px;
+            font-size: 14px;
+            color: #4b5563;
+        }
+        
+        .level-stats-item {
+            display: flex;
+            align-items: center;
+            margin: 0 8px;
+        }
+        
+        .level-stats-icon {
+            margin-right: 4px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen flex flex-col items-center py-8 px-4">
+        <h1 class="text-3xl font-bold text-center mb-4 text-blue-800">康樂國小 華容道 低年級版</h1>
+        
+        <div class="flex items-center justify-between w-full max-w-md mb-4">
+            <div class="flex items-center">
+                <span class="text-lg font-bold mr-2">第 <span id="current-level">1</span> 關</span>
+                <div class="moves-counter mr-2">
+                    步數: <span id="moves-count">0</span>
+                </div>
+                <div class="timer-display">
+                    時間: <span id="timer-display">00:00</span>
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <button id="restart-btn" class="btn bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg shadow">
+                    重新開始
+                </button>
+                <button id="help-btn" class="btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow">
+                    說明
+                </button>
+            </div>
+        </div>
+        
+        <div class="game-board mb-6" id="game-board">
+            <div class="exit"></div>
+        </div>
+        
+        <div class="w-full max-w-md">
+            <h3 class="text-lg font-bold mb-2 text-gray-700">選擇關卡:</h3>
+            <div class="grid grid-cols-5 gap-2 mb-4" id="level-selector">
+                <!-- Level buttons will be generated here -->
+            </div>
+        </div>
+    </div>
+    
+    <div class="tutorial-overlay" id="tutorial" style="display: none;">
+        <div class="tutorial-content">
+            <h2 class="text-2xl font-bold mb-4">遊戲說明</h2>
+            <div class="space-y-4">
+                <p>華容道是一個古老的益智遊戲，目標是將主角方塊 <span class="block-icon hero"></span> 移動到底部的出口。</p>
+                <p>點擊並拖動方塊來移動它們。方塊只能沿著空白處移動。</p>
+                <p>不同的方塊：</p>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li><span class="block-icon hero"></span> 主角方塊 - 需要移動到出口</li>
+                    <li><span class="block-icon vertical"></span> 直立方塊 - 佔據 1x2 格</li>
+                    <li><span class="block-icon horizontal"></span> 橫向方塊 - 佔據 2x1 格</li>
+                    <li><span class="block-icon small"></span> 小方塊 - 佔據 1x1 格</li>
+                </ul>
+                <p>用最少的步數完成挑戰可以獲得更多星星！</p>
+                <div class="mt-6 text-center">
+                    <button id="close-tutorial" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow">
+                        開始遊戲
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="win-overlay" id="win-screen" style="display: none;">
+        <div class="win-content">
+            <h2 class="text-2xl font-bold mb-2">恭喜過關！</h2>
+            <p class="mb-2">你用了 <span id="final-moves" class="font-bold text-blue-600"></span> 步完成了這一關</p>
+            <p class="mb-4">用時: <span id="final-time" class="font-bold text-blue-600"></span></p>
+            
+            <div class="mb-6">
+                <div class="star">★</div>
+                <div class="star">★</div>
+                <div class="star">★</div>
+            </div>
+            
+            <div class="flex gap-3 justify-center">
+                <button id="next-level" class="btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow">
+                    下一關
+                </button>
+                <button id="replay-level" class="btn bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg shadow">
+                    重玩本關
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const state = {
+            currentLevel: 1,
+            moves: 0,
+            dragging: null,
+            startX: 0,
+            startY: 0,
+            blockStartX: 0,
+            blockStartY: 0,
+            blocks: [],
+            gridSize: { cols: 4, rows: 5 },
+            cellSize: 0,
+            completedLevels: {},
+            bestMoves: {},
+            bestTimes: {},
+            moveDirection: null, // 'horizontal' or 'vertical'
+            lastMoveTime: 0,
+            moveThreshold: 5, // Minimum pixels to move before determining direction
+            lastValidX: 0,
+            lastValidY: 0,
+            timer: {
+                startTime: 0,
+                elapsedTime: 0,
+                interval: null,
+                running: false
+            }
+        };
+
+        // Level definitions
+        const levels = [
+            // Level 1 - Very Easy Introduction
+            {
+                blocks: [
+                    { type: 'hero', x: 1, y: 1, width: 2, height: 2, character: '🐼' },
+                    { type: 'horizontal', x: 0, y: 0, width: 2, height: 1, character: '🌿' },
+                    { type: 'horizontal', x: 2, y: 0, width: 2, height: 1, character: '🌿' },
+                    { type: 'small', x: 0, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 3, y: 3, width: 1, height: 1, character: '🪨' },
+                ],
+                targetMoves: [5, 8, 12]
+            },
+            // Level 2 - Easy
+            {
+                blocks: [
+                    { type: 'hero', x: 1, y: 1, width: 2, height: 2, character: '🐼' },
+                    { type: 'vertical', x: 0, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'vertical', x: 3, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'horizontal', x: 0, y: 3, width: 2, height: 1, character: '🌿' },
+                    { type: 'horizontal', x: 2, y: 3, width: 2, height: 1, character: '🌿' },
+                    { type: 'small', x: 1, y: 0, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 2, y: 0, width: 1, height: 1, character: '🪨' },
+                ],
+                targetMoves: [10, 15, 20]
+            },
+            // Level 3
+            {
+                blocks: [
+                    { type: 'hero', x: 1, y: 0, width: 2, height: 2, character: '🐼' },
+                    { type: 'vertical', x: 0, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'vertical', x: 3, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'horizontal', x: 0, y: 2, width: 2, height: 1, character: '🌿' },
+                    { type: 'horizontal', x: 2, y: 2, width: 2, height: 1, character: '🌿' },
+                    { type: 'small', x: 0, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 1, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 2, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 3, y: 3, width: 1, height: 1, character: '🪨' },
+                ],
+                targetMoves: [12, 18, 25]
+            },
+            // Level 4
+            {
+                blocks: [
+                    { type: 'hero', x: 1, y: 1, width: 2, height: 2, character: '🐼' },
+                    { type: 'vertical', x: 0, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'vertical', x: 3, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'horizontal', x: 1, y: 0, width: 2, height: 1, character: '🌿' },
+                    { type: 'horizontal', x: 0, y: 3, width: 2, height: 1, character: '🌿' },
+                    { type: 'horizontal', x: 2, y: 3, width: 2, height: 1, character: '🌿' },
+                    { type: 'small', x: 0, y: 4, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 3, y: 4, width: 1, height: 1, character: '🪨' },
+                ],
+                targetMoves: [15, 20, 30]
+            },
+            // Level 5
+            {
+                blocks: [
+                    { type: 'hero', x: 1, y: 0, width: 2, height: 2, character: '🐼' },
+                    { type: 'vertical', x: 0, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'vertical', x: 3, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'horizontal', x: 0, y: 2, width: 2, height: 1, character: '🌿' },
+                    { type: 'horizontal', x: 2, y: 2, width: 2, height: 1, character: '🌿' },
+                    { type: 'small', x: 0, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 3, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 1, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 2, y: 3, width: 1, height: 1, character: '🪨' },
+                ],
+                targetMoves: [18, 25, 35]
+            },
+            // Level 6
+            {
+                blocks: [
+                    { type: 'hero', x: 1, y: 1, width: 2, height: 2, character: '🐼' },
+                    { type: 'vertical', x: 0, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'vertical', x: 3, y: 1, width: 1, height: 2, character: '🌲' },
+                    { type: 'horizontal', x: 1, y: 0, width: 2, height: 1, character: '🌿' },
+                    { type: 'horizontal', x: 0, y: 3, width: 2, height: 1, character: '🌿' },
+                    { type: 'small', x: 3, y: 0, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 0, y: 2, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 2, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 3, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 1, y: 4, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 2, y: 4, width: 1, height: 1, character: '🪨' },
+                ],
+                targetMoves: [20, 30, 40]
+            },
+            // Level 7
+            {
+                blocks: [
+                    { type: 'hero', x: 1, y: 0, width: 2, height: 2, character: '🐼' },
+                    { type: 'vertical', x: 0, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'vertical', x: 3, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'horizontal', x: 0, y: 2, width: 2, height: 1, character: '🌿' },
+                    { type: 'horizontal', x: 2, y: 2, width: 2, height: 1, character: '🌿' },
+                    { type: 'small', x: 0, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 1, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 2, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 3, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 0, y: 4, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 3, y: 4, width: 1, height: 1, character: '🪨' },
+                ],
+                targetMoves: [25, 35, 45]
+            },
+            // Level 8
+            {
+                blocks: [
+                    { type: 'hero', x: 1, y: 0, width: 2, height: 2, character: '🐼' },
+                    { type: 'vertical', x: 0, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'vertical', x: 3, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'horizontal', x: 0, y: 2, width: 2, height: 1, character: '🌿' },
+                    { type: 'horizontal', x: 2, y: 2, width: 2, height: 1, character: '🌿' },
+                    { type: 'small', x: 0, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 1, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 2, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 3, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 1, y: 4, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 2, y: 4, width: 1, height: 1, character: '🪨' },
+                ],
+                targetMoves: [25, 35, 45]
+            },
+            // Level 9
+            {
+                blocks: [
+                    { type: 'hero', x: 1, y: 0, width: 2, height: 2, character: '🐼' },
+                    { type: 'vertical', x: 0, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'vertical', x: 3, y: 0, width: 1, height: 2, character: '🌲' },
+                    { type: 'horizontal', x: 0, y: 2, width: 2, height: 1, character: '🌿' },
+                    { type: 'horizontal', x: 2, y: 2, width: 2, height: 1, character: '🌿' },
+                    { type: 'small', x: 0, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 3, y: 3, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 0, y: 4, width: 1, height: 1, character: '🪨' },
+                    { type: 'small', x: 3, y: 4, width: 1, height: 1, character: '🪨' },
+                ],
+                targetMoves: [20, 30, 40]
+            },
+            // Level 10 - REDESIGNED to be definitely solvable
+            {
+                blocks: [  { type: 'hero', x: 1, y: 0, width: 2, height: 2, character: '🐼' },
+        { type: 'vertical', x: 0, y: 0, width: 1, height: 2, character: '🌲' },
+        { type: 'vertical', x: 3, y: 0, width: 1, height: 2, character: '🌲' },
+        { type: 'horizontal', x: 0, y: 2, width: 2, height: 1, character: '🌿' },
+        { type: 'horizontal', x: 2, y: 2, width: 2, height: 1, character: '🌿' },
+        { type: 'small', x: 1, y: 3, width: 1, height: 1, character: '🪨' },
+        { type: 'small', x: 2, y: 3, width: 1, height: 1, character: '🪨' },
+        { type: 'small', x: 0, y: 3, width: 1, height: 1, character: '🪨' },
+        { type: 'small', x: 3, y: 3, width: 1, height: 1, character: '🪨' },
+        { type: 'small', x: 1, y: 4, width: 1, height: 1, character: '🪨' },
+        { type: 'small', x: 2, y: 4, width: 1, height: 1, character: '🪨' },
+    ],
+    targetMoves: [30, 40, 50]
+            }
+        ];
+
+        // DOM elements
+        const gameBoard = document.getElementById('game-board');
+        const movesCount = document.getElementById('moves-count');
+        const timerDisplay = document.getElementById('timer-display');
+        const currentLevelDisplay = document.getElementById('current-level');
+        const levelSelector = document.getElementById('level-selector');
+        const restartBtn = document.getElementById('restart-btn');
+        const helpBtn = document.getElementById('help-btn');
+        const tutorial = document.getElementById('tutorial');
+        const closeTutorial = document.getElementById('close-tutorial');
+        const winScreen = document.getElementById('win-screen');
+        const finalMoves = document.getElementById('final-moves');
+        const finalTime = document.getElementById('final-time');
+        const nextLevelBtn = document.getElementById('next-level');
+        const replayLevelBtn = document.getElementById('replay-level');
+
+        // Initialize the game
+        function initGame() {
+            // Load saved data
+            loadGameData();
+            
+            // Create level selector buttons
+            createLevelButtons();
+            
+            // Set up the first level
+            loadLevel(state.currentLevel);
+            
+            // Show tutorial on first load
+            if (!localStorage.getItem('tutorialSeen')) {
+                tutorial.style.display = 'flex';
+                localStorage.setItem('tutorialSeen', 'true');
+            }
+            
+            // Add event listeners
+            restartBtn.addEventListener('click', () => loadLevel(state.currentLevel));
+            helpBtn.addEventListener('click', () => tutorial.style.display = 'flex');
+            closeTutorial.addEventListener('click', () => tutorial.style.display = 'none');
+            nextLevelBtn.addEventListener('click', () => {
+                winScreen.style.display = 'none';
+                if (state.currentLevel < levels.length) {
+                    loadLevel(state.currentLevel + 1);
+                }
+            });
+            replayLevelBtn.addEventListener('click', () => {
+                winScreen.style.display = 'none';
+                loadLevel(state.currentLevel);
+            });
+            
+            // Add drag event listeners
+            gameBoard.addEventListener('mousedown', startDrag);
+            gameBoard.addEventListener('touchstart', startDrag, { passive: false });
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag, { passive: false });
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchend', endDrag);
+            
+            // Resize handler
+            window.addEventListener('resize', () => {
+                calculateCellSize();
+                updateBlockPositions();
+            });
+            
+            // Initial size calculation
+            calculateCellSize();
+        }
+
+        // Load saved game data from localStorage
+        function loadGameData() {
+            try {
+                const savedData = localStorage.getItem('klotskiGameData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    state.completedLevels = data.completedLevels || {};
+                    state.bestMoves = data.bestMoves || {};
+                    state.bestTimes = data.bestTimes || {};
+                    state.currentLevel = data.currentLevel || 1;
+                }
+            } catch (e) {
+                console.error('Error loading game data:', e);
+            }
+        }
+
+        // Save game data to localStorage
+        function saveGameData() {
+            try {
+                const data = {
+                    completedLevels: state.completedLevels,
+                    bestMoves: state.bestMoves,
+                    bestTimes: state.bestTimes,
+                    currentLevel: state.currentLevel
+                };
+                localStorage.setItem('klotskiGameData', JSON.stringify(data));
+            } catch (e) {
+                console.error('Error saving game data:', e);
+            }
+        }
+
+        // Create level selector buttons
+        function createLevelButtons() {
+            levelSelector.innerHTML = '';
+            
+            for (let i = 1; i <= levels.length; i++) {
+                const button = document.createElement('button');
+                button.textContent = i;
+                button.classList.add('level-button');
+                
+                if (i === state.currentLevel) {
+                    button.classList.add('current');
+                } else if (state.completedLevels[i]) {
+                    button.classList.add('completed');
+                } else if (i > 1 && !state.completedLevels[i-1] && i !== state.currentLevel) {
+                    button.classList.add('locked');
+                } else {
+                    button.classList.add('bg-gray-200');
+                }
+                
+                if (!button.classList.contains('locked')) {
+                    button.addEventListener('click', () => loadLevel(i));
+                }
+                
+                // Add tooltip with best time and moves if available
+                if (state.bestTimes[i] || state.bestMoves[i]) {
+                    const tooltip = document.createElement('div');
+                    tooltip.classList.add('level-stats');
+                    
+                    if (state.bestMoves[i]) {
+                        const movesItem = document.createElement('div');
+                        movesItem.classList.add('level-stats-item');
+                        movesItem.innerHTML = <span class="level-stats-icon">👣</span>${state.bestMoves[i]};
+                        tooltip.appendChild(movesItem);
+                    }
+                    
+                    if (state.bestTimes[i]) {
+                        const timeItem = document.createElement('div');
+                        timeItem.classList.add('level-stats-item');
+                        timeItem.innerHTML = <span class="level-stats-icon">⏱️</span>${formatTime(state.bestTimes[i])};
+                        tooltip.appendChild(timeItem);
+                    }
+                    
+                    button.title = 最佳記錄: ${state.bestMoves[i] || '?'} 步, ${state.bestTimes[i] ? formatTime(state.bestTimes[i]) : '?'} 秒;
+                }
+                
+                levelSelector.appendChild(button);
+            }
+        }
+
+        // Calculate cell size based on game board dimensions
+        function calculateCellSize() {
+            const boardWidth = gameBoard.clientWidth;
+            const boardHeight = gameBoard.clientHeight;
+            
+            state.cellSize = Math.min(
+                boardWidth / state.gridSize.cols,
+                boardHeight / state.gridSize.rows
+            );
+        }
+
+        // Load a specific level
+        function loadLevel(levelIndex) {
+            // Clear the board
+            const blocks = document.querySelectorAll('.block');
+            blocks.forEach(block => block.remove());
+            
+            // Stop timer if running
+            stopTimer();
+            
+            // Update state
+            state.currentLevel = levelIndex;
+            state.moves = 0;
+            movesCount.textContent = '0';
+            currentLevelDisplay.textContent = levelIndex;
+            timerDisplay.textContent = '00:00';
+            
+            // Create blocks for the level
+            createBlocks(levels[levelIndex - 1].blocks);
+            
+            // Update level buttons
+            createLevelButtons();
+            
+            // Start timer
+            startTimer();
+            
+            // Save current level
+            saveGameData();
+        }
+
+        // Create blocks for the current level
+        function createBlocks(blocksData) {
+            state.blocks = [];
+            
+            blocksData.forEach(blockData => {
+                const block = document.createElement('div');
+                block.classList.add('block', blockData.type);
+                
+                // Set block dimensions and position
+                block.style.width = ${blockData.width * state.cellSize}px;
+                block.style.height = ${blockData.height * state.cellSize}px;
+                block.style.transform = translate(${blockData.x * state.cellSize}px, ${blockData.y * state.cellSize}px);
+                
+                // Add character if provided
+                if (blockData.character) {
+                    const character = document.createElement('div');
+                    character.classList.add('character');
+                    character.textContent = blockData.character;
+                    block.appendChild(character);
+                }
+                
+                // Store block data
+                const blockObj = {
+                    element: block,
+                    x: blockData.x,
+                    y: blockData.y,
+                    width: blockData.width,
+                    height: blockData.height,
+                    type: blockData.type
+                };
+                
+                state.blocks.push(blockObj);
+                gameBoard.appendChild(block);
+            });
+        }
+
+        // Update block positions based on their coordinates
+        function updateBlockPositions() {
+            state.blocks.forEach(block => {
+                block.element.style.width = ${block.width * state.cellSize}px;
+                block.element.style.height = ${block.height * state.cellSize}px;
+                block.element.style.transform = translate(${block.x * state.cellSize}px, ${block.y * state.cellSize}px);
+            });
+        }
+
+        // Start dragging a block
+        function startDrag(e) {
+            e.preventDefault();
+            
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            if (!clientX || !clientY) return;
+            
+            const rect = gameBoard.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+            
+            // Find the block being clicked
+            for (let i = 0; i < state.blocks.length; i++) {
+                const block = state.blocks[i];
+                const blockX = block.x * state.cellSize;
+                const blockY = block.y * state.cellSize;
+                const blockWidth = block.width * state.cellSize;
+                const blockHeight = block.height * state.cellSize;
+                
+                if (
+                    x >= blockX && x <= blockX + blockWidth &&
+                    y >= blockY && y <= blockY + blockHeight
+                ) {
+                    state.dragging = block;
+                    state.startX = clientX;
+                    state.startY = clientY;
+                    state.blockStartX = block.x;
+                    state.blockStartY = block.y;
+                    state.lastValidX = block.x;
+                    state.lastValidY = block.y;
+                    state.moveDirection = null; // Reset move direction
+                    block.element.style.zIndex = '20';
+                    break;
+                }
+            }
+        }
+
+        // Drag a block
+        function drag(e) {
+            if (!state.dragging) return;
+            
+            e.preventDefault();
+            
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            if (!clientX || !clientY) return;
+            
+            const deltaX = clientX - state.startX;
+            const deltaY = clientY - state.startY;
+            
+            // Determine movement direction if not already set
+            if (!state.moveDirection) {
+                if (Math.abs(deltaX) < state.moveThreshold && Math.abs(deltaY) < state.moveThreshold) {
+                    return; // Wait until we've moved enough to determine direction
+                }
+                
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    state.moveDirection = 'horizontal';
+                } else {
+                    state.moveDirection = 'vertical';
+                }
+            }
+            
+            // Calculate grid movement
+            let gridDeltaX = 0;
+            let gridDeltaY = 0;
+            
+            if (state.moveDirection === 'horizontal') {
+                // For horizontal movement, we need to check if we can move one cell at a time
+                const targetX = Math.round(state.blockStartX + deltaX / state.cellSize);
+                
+                // Try to move one cell at a time towards the target
+                if (targetX > state.lastValidX) {
+                    // Try to move right one cell
+                    if (canMoveBlock(state.dragging, state.lastValidX + 1, state.lastValidY)) {
+                        state.lastValidX++;
+                    }
+                } else if (targetX < state.lastValidX) {
+                    // Try to move left one cell
+                    if (canMoveBlock(state.dragging, state.lastValidX - 1, state.lastValidY)) {
+                        state.lastValidX--;
+                    }
+                }
+                
+                // Update block position to the last valid position
+                state.dragging.x = state.lastValidX;
+                state.dragging.element.style.transform = translate(${state.dragging.x * state.cellSize}px, ${state.dragging.y * state.cellSize}px);
+            } else {
+                // For vertical movement, we need to check if we can move one cell at a time
+                const targetY = Math.round(state.blockStartY + deltaY / state.cellSize);
+                
+                // Try to move one cell at a time towards the target
+                if (targetY > state.lastValidY) {
+                    // Try to move down one cell
+                    if (canMoveBlock(state.dragging, state.lastValidX, state.lastValidY + 1)) {
+                        state.lastValidY++;
+                    }
+                } else if (targetY < state.lastValidY) {
+                    // Try to move up one cell
+                    if (canMoveBlock(state.dragging, state.lastValidX, state.lastValidY - 1)) {
+                        state.lastValidY--;
+                    }
+                }
+                
+                // Update block position to the last valid position
+                state.dragging.y = state.lastValidY;
+                state.dragging.element.style.transform = translate(${state.dragging.x * state.cellSize}px, ${state.dragging.y * state.cellSize}px);
+            }
+        }
+
+        // Check if a block can move to a specific position
+        function canMoveBlock(block, newX, newY) {
+            // Check boundaries
+            if (
+                newX < 0 || newY < 0 ||
+                newX + block.width > state.gridSize.cols ||
+                newY + block.height > state.gridSize.rows
+            ) {
+                return false;
+            }
+            
+            // Check collision with other blocks
+            for (let i = 0; i < state.blocks.length; i++) {
+                const otherBlock = state.blocks[i];
+                if (otherBlock === block) continue;
+                
+                // Check if blocks overlap
+                if (
+                    newX < otherBlock.x + otherBlock.width &&
+                    newX + block.width > otherBlock.x &&
+                    newY < otherBlock.y + otherBlock.height &&
+                    newY + block.height > otherBlock.y
+                ) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // End dragging
+        function endDrag() {
+            if (state.dragging) {
+                state.dragging.element.style.zIndex = state.dragging.type === 'hero' ? '10' : '1';
+                
+                // Check if the block has moved
+                if (state.dragging.x !== state.blockStartX || state.dragging.y !== state.blockStartY) {
+                    state.moves++;
+                    movesCount.textContent = state.moves;
+                    
+                    // Check for win condition
+                    checkWinCondition();
+                }
+                
+                state.dragging = null;
+                state.moveDirection = null;
+            }
+        }
+
+        // Check if the player has won
+        function checkWinCondition() {
+            // Find the hero block
+            const heroBlock = state.blocks.find(block => block.type === 'hero');
+            
+            // Check if hero is at the exit (bottom center)
+            if (heroBlock && heroBlock.y + heroBlock.height === state.gridSize.rows && heroBlock.x === 1) {
+                // Win!
+                stopTimer();
+                setTimeout(() => {
+                    showWinScreen();
+                }, 500);
+            }
+        }
+
+        // Show win screen
+        function showWinScreen() {
+            // Update win screen
+            finalMoves.textContent = state.moves;
+            finalTime.textContent = formatTime(state.timer.elapsedTime);
+            
+            // Calculate stars
+            const stars = document.querySelectorAll('.win-content .star');
+            const targetMoves = levels[state.currentLevel - 1].targetMoves;
+            let earnedStars = 1; // At least 1 star for completing
+            
+            if (state.moves <= targetMoves[0]) {
+                earnedStars = 3;
+            } else if (state.moves <= targetMoves[1]) {
+                earnedStars = 2;
+            }
+            
+            // Update stars display
+            stars.forEach((star, index) => {
+                star.classList.remove('earned');
+                if (index < earnedStars) {
+                    setTimeout(() => {
+                        star.classList.add('earned');
+                    }, 300 * index);
+                }
+            });
+            
+            // Create confetti
+            createConfetti();
+            
+            // Update game state
+            state.completedLevels[state.currentLevel] = true;
+            
+            // Update best moves
+            if (!state.bestMoves[state.currentLevel] || state.moves < state.bestMoves[state.currentLevel]) {
+                state.bestMoves[state.currentLevel] = state.moves;
+            }
+            
+            // Update best time
+            if (!state.bestTimes[state.currentLevel] || state.timer.elapsedTime < state.bestTimes[state.currentLevel]) {
+                state.bestTimes[state.currentLevel] = state.timer.elapsedTime;
+            }
+            
+            // Save game data
+            saveGameData();
+            
+            // Update level buttons
+            createLevelButtons();
+            
+            // Show win screen
+            winScreen.style.display = 'flex';
+        }
+
+        // Create confetti effect
+        function createConfetti() {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = ${Math.random() * 100}%;
+                confetti.style.animationDuration = ${2 + Math.random() * 2}s;
+                confetti.style.animationDelay = ${Math.random() * 0.5}s;
+                
+                document.body.appendChild(confetti);
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+
+        // Timer functions
+        function startTimer() {
+            state.timer.startTime = Date.now() - state.timer.elapsedTime;
+            state.timer.running = true;
+            
+            state.timer.interval = setInterval(() => {
+                if (state.timer.running) {
+                    state.timer.elapsedTime = Date.now() - state.timer.startTime;
+                    timerDisplay.textContent = formatTime(state.timer.elapsedTime);
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (state.timer.running) {
+                clearInterval(state.timer.interval);
+                state.timer.running = false;
+            }
+        }
+
+        function resetTimer() {
+            stopTimer();
+            state.timer.elapsedTime = 0;
+            timerDisplay.textContent = '00:00';
+        }
+
+        function formatTime(milliseconds) {
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')};
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('load', initGame);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9317949ac3a64a00',t:'MTc0NDg0NzM4MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
