@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>三國華容道</title>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      text-align: center;
+      margin: 0;
+      background: #f5efe6;
+    }
+    h1 {
+      background: linear-gradient(to right, #a83232, #6b0f0f);
+      color: white;
+      padding: 1rem;
+      margin: 0;
+    }
+    #menu {
+      padding: 1rem;
+    }
+    .button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 0.5rem;
+      background-color: #8b0000;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #board {
+      position: relative;
+      margin: 0 auto;
+      width: 300px;
+      height: 375px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 4px;
+      background: #bb9d82;
+      padding: 6px;
+      border-radius: 12px;
+    }
+    #exit {
+      position: absolute;
+      bottom: -36px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #e25c5c;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    #steps {
+      margin-top: 40px;
+      font-weight: bold;
+    }
+    .tile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      user-select: none;
+      border-radius: 8px;
+      touch-action: none;
+      font-size: 1.5rem;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    .cao { background: #e25c5c; color: white; grid-column: span 2; grid-row: span 2; }
+    .guan { background: #4caf50; color: white; grid-column: span 2; }
+    .general { background: #4aa3df; color: white; grid-row: span 2; }
+    .soldier { background: #f2b14c; color: white; }
+  </style>
+</head>
+<body>
+  <h1>三國華容道</h1>
+  <div id="menu">
+    <button class="button" onclick="loadLevel(1)">第一關：一夫當關</button>
+    <button class="button" onclick="loadLevel(2)">第二關：小卒擋道</button>
+  </div>
+  <div id="game" style="display:none;">
+    <div id="board">
+      <div id="exit">出口</div>
+    </div>
+    <p id="steps">移動步數：0</p>
+    <button class="button" onclick="resetGame()">重新開始</button>
+    <button class="button" onclick="location.reload()">回首頁</button>
+  </div>
+  <script>
+    const board = document.getElementById("board");
+    const stepsDisplay = document.getElementById("steps");
+    let steps = 0;
+    let gameFinished = false;
+    let blocks = [];
+    let initialPositions = [];
+
+    const levels = {
+      1: [
+        { id: "ma", class: "general", x: 0, y: 0, w: 1, h: 2 },
+        { id: "zhang", class: "general", x: 1, y: 0, w: 1, h: 2 },
+        { id: "huang", class: "general", x: 2, y: 0, w: 1, h: 2 },
+        { id: "zhao", class: "general", x: 3, y: 0, w: 1, h: 2 },
+        { id: "s4", class: "soldier", x: 0, y: 2, w: 1, h: 1 },
+        { id: "s3", class: "soldier", x: 0, y: 3, w: 1, h: 1 },
+        { id: "cao", class: "cao", x: 1, y: 2, w: 2, h: 2 },
+        { id: "s2", class: "soldier", x: 3, y: 2, w: 1, h: 1 },
+        { id: "s1", class: "soldier", x: 3, y: 3, w: 1, h: 1 },
+        { id: "guan", class: "guan", x: 1, y: 4, w: 2, h: 1 },
+      ],
+      2: [
+        { id: "ma", class: "general", x: 0, y: 0, w: 1, h: 2 },
+        { id: "zhang", class: "general", x: 1, y: 0, w: 1, h: 2 },
+        { id: "huang", class: "general", x: 2, y: 0, w: 1, h: 2 },
+        { id: "zhao", class: "general", x: 3, y: 0, w: 1, h: 2 },
+        { id: "s4", class: "soldier", x: 0, y: 2, w: 1, h: 1 },
+        { id: "s2", class: "soldier", x: 1, y: 2, w: 1, h: 1 },
+        { id: "s3", class: "soldier", x: 0, y: 3, w: 1, h: 1 },
+        { id: "s1", class: "soldier", x: 1, y: 3, w: 1, h: 1 },
+        { id: "cao", class: "cao", x: 2, y: 2, w: 2, h: 2 },
+        { id: "guan", class: "guan", x: 2, y: 4, w: 2, h: 1 },
+      ],
+    };
+
+    function loadLevel(level) {
+      blocks = JSON.parse(JSON.stringify(levels[level]));
+      initialPositions = blocks.map(b => ({ id: b.id, x: b.x, y: b.y }));
+      document.getElementById("menu").style.display = "none";
+      document.getElementById("game").style.display = "block";
+      resetGame();
+    }
+
+    function createBlock(b) {
+      const div = document.createElement("div");
+      div.id = b.id;
+      div.className = `tile ${b.class}`;
+      div.style.gridColumnStart = b.x + 1;
+      div.style.gridRowStart = b.y + 1;
+      div.style.gridColumnEnd = `span ${b.w}`;
+      div.style.gridRowEnd = `span ${b.h}`;
+      div.innerText = b.id === 'cao' ? '🐼' : b.id === 'guan' ? '🍃' : b.id.startsWith('s') ? '👦' : '◻';
+      board.appendChild(div);
+
+      let startX, startY;
+
+      div.onpointerdown = function(e) {
+        if (gameFinished) return;
+        e.preventDefault();
+        startX = e.clientX;
+        startY = e.clientY;
+        div.setPointerCapture(e.pointerId);
+
+        div.onpointerup = function(e2) {
+          const dx = e2.clientX - startX;
+          const dy = e2.clientY - startY;
+          const absX = Math.abs(dx);
+          const absY = Math.abs(dy);
+          if (absX > absY) {
+            if (dx > 20 && canMove(b, b.x + 1, b.y)) b.x += 1;
+            else if (dx < -20 && canMove(b, b.x - 1, b.y)) b.x -= 1;
+          } else {
+            if (dy > 20 && canMove(b, b.x, b.y + 1)) b.y += 1;
+            else if (dy < -20 && canMove(b, b.x, b.y - 1)) b.y -= 1;
+          }
+          updateBoard();
+          steps++;
+          stepsDisplay.innerText = `移動步數：${steps}`;
+          checkWin();
+          div.releasePointerCapture(e.pointerId);
+        };
+      };
+    }
+
+    function canMove(block, newX, newY) {
+      if (newX < 0 || newY < 0 || newX + block.w > 4 || newY + block.h > 5) return false;
+      for (let other of blocks) {
+        if (other.id !== block.id) {
+          if (
+            newX < other.x + other.w &&
+            newX + block.w > other.x &&
+            newY < other.y + other.h &&
+            newY + block.h > other.y
+          ) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    function updateBoard() {
+      for (let b of blocks) {
+        const el = document.getElementById(b.id);
+        el.style.gridColumnStart = b.x + 1;
+        el.style.gridRowStart = b.y + 1;
+      }
+    }
+
+    function checkWin() {
+      const cao = blocks.find(b => b.id === "cao");
+      if (cao.x === 1 && cao.y === 3) {
+        gameFinished = true;
+        board.style.opacity = "0.5";
+        setTimeout(() => alert("🎉 成功解救曹操！總步數：" + steps), 200);
+      }
+    }
+
+    function resetGame() {
+      board.innerHTML = "<div id=\"exit\">出口</div>";
+      steps = 0;
+      gameFinished = false;
+      board.style.opacity = "1";
+      stepsDisplay.innerText = "移動步數：0";
+      blocks.forEach(b => {
+        const init = initialPositions.find(p => p.id === b.id);
+        b.x = init.x;
+        b.y = init.y;
+      });
+      blocks.forEach(createBlock);
+    }
+  </script>
+</body>
+</html>
