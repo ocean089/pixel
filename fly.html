@@ -348,7 +348,7 @@ function checkWin() {
   const exit = document.getElementById("exit");
   const exitRow = 4;
   const exitCol = Math.floor(exit.offsetLeft / (board.offsetWidth / 4));
-  if (cao && cao.y + cao.h === 5 && (cao.x === exitCol || cao.x + cao.w - 1 === exitCol)) {
+  if (cao && cao.y + cao.h === 5 && cao.x === 1 && cao.w === 2) {
     gameFinished = true;
     const endTime = Math.floor((Date.now() - startTime) / 1000);
     const stars = steps <= 40 && endTime <= 60 ? '⭐⭐⭐' : steps <= 60 ? '⭐⭐' : '⭐';
