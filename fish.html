@@ -77,10 +77,8 @@
 </head>
 <body>
   <h1>三國華容道</h1>
-  <div id="menu">
-    <button class="button" onclick="loadLevel(1)">第一關：一夫當關</button>
-    <button class="button" onclick="loadLevel(2)">第二關：小卒擋道</button>
-  </div>
+  $1
+    <button class="button" onclick="loadLevel(3)">第三關：處處設防</button>
   <div id="game" style="display:none;">
     <div id="board">
       <div id="exit">出口</div>
@@ -98,6 +96,18 @@
     let initialPositions = [];
 
     const levels = {
+      3: [
+        { id: "s1", class: "soldier", x: 0, y: 0, w: 1, h: 1 },
+        { id: "s2", class: "soldier", x: 3, y: 0, w: 1, h: 1 },
+        { id: "cao", class: "cao", x: 1, y: 0, w: 2, h: 2 },
+        { id: "zhang", class: "general", x: 0, y: 1, w: 1, h: 2 },
+        { id: "huang", class: "general", x: 3, y: 1, w: 1, h: 2 },
+        { id: "s4", class: "soldier", x: 1, y: 2, w: 1, h: 1 },
+        { id: "s3", class: "soldier", x: 2, y: 2, w: 1, h: 1 },
+        { id: "ma", class: "general", x: 0, y: 3, w: 1, h: 2 },
+        { id: "guan", class: "guan", x: 1, y: 3, w: 2, h: 1 },
+        { id: "zhao", class: "general", x: 3, y: 3, w: 1, h: 2 },
+      ],
       1: [
         { id: "ma", class: "general", x: 0, y: 0, w: 1, h: 2 },
         { id: "zhang", class: "general", x: 1, y: 0, w: 1, h: 2 },
