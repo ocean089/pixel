@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小小兵貼地磚 - 座標練習</title>
+    <title>小小兵貼地磚 - 數織與座標挑戰</title>
     <style>
         :root {
             --primary-blue: #007BFF;
@@ -19,8 +19,8 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* 防止捲動 */
-            user-select: none; /* 禁止選取文字 */
+            overflow: hidden;
+            user-select: none;
         }
 
         /* --- 1. 歡迎說明頁 (Splash Screen) --- */
@@ -90,7 +90,7 @@
 
         /* 左欄：控制區與題目 */
         .sidebar {
-            width: 300px; /* 固定寬度 */
+            width: 320px;
             background: white;
             padding: 20px;
             border-radius: 15px;
@@ -104,8 +104,8 @@
         .game-area {
             flex: 1;
             display: flex;
-            justify-content: center; /* 水平置中 */
-            align-items: flex-start; /* 靠上對齊 */
+            justify-content: center;
+            align-items: flex-start;
             overflow: auto;
             background: white;
             border-radius: 15px;
@@ -117,25 +117,22 @@
         .btn-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 15px;
         }
 
-        button {
-            padding: 10px;
-            font-size: 1rem;
+        button.task-btn {
+            padding: 8px;
+            font-size: 0.95rem;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.2s;
-        }
-
-        .task-btn {
             background-color: #e0e0e0;
             color: #333;
         }
 
-        .task-btn.active {
+        button.task-btn.active {
             background-color: var(--primary-blue);
             color: white;
             font-weight: bold;
@@ -145,20 +142,45 @@
             background-color: #dc3545;
             color: white;
             width: 100%;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
         }
 
         /* 題目說明文字區 */
         .task-display {
-            font-size: 1.1rem;
-            line-height: 1.8;
+            font-size: 1rem;
+            line-height: 1.6;
             text-align: left;
-            padding: 10px;
+            padding: 15px;
             background: #f9f9f9;
             border-radius: 8px;
             border: 1px solid #ddd;
+            flex: 1;
+            overflow-y: auto;
         }
 
+        .task-display h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #333;
+            border-bottom: 2px solid var(--minion-yellow);
+            padding-bottom: 5px;
+            display: inline-block;
+        }
+
+        /* 數織提示樣式 */
+        .nonogram-hint {
+            margin-bottom: 10px;
+            font-family: monospace;
+            background: #eee;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        
         .task-display span.correct {
             color: #ccc !important;
             text-decoration: line-through;
@@ -167,21 +189,21 @@
 
         /* --- 網格系統 --- */
         .grid-wrapper {
-            display: inline-block; /* 讓容器包住內容 */
+            display: inline-block;
             position: relative;
         }
 
         .grid-container {
             display: grid;
-            grid-template-columns: 40px auto; /* 左邊標頭 + 網格 */
-            grid-template-rows: 40px auto;    /* 上方標頭 + 網格 */
+            grid-template-columns: 40px auto;
+            grid-template-rows: 40px auto;
         }
 
         /* 標頭樣式 */
         .header-row {
             grid-column: 2;
             display: grid;
-            grid-template-columns: repeat(15, 36px); /* 格子稍微縮小一點適應平板 */
+            grid-template-columns: repeat(15, 36px);
             justify-items: center;
             align-items: center;
             font-weight: bold;
@@ -206,8 +228,8 @@
             grid-template-columns: repeat(15, 36px);
             grid-template-rows: repeat(15, 36px);
             border: 2px solid #333;
-            background-color: #999; /* 格線顏色 */
-            gap: 1px; /* 創造格線效果 */
+            background-color: #999;
+            gap: 1px;
         }
 
         .cell {
@@ -217,7 +239,6 @@
             cursor: pointer;
         }
         
-        /* 點選後的反饋 */
         .cell:active {
             opacity: 0.8;
         }
@@ -232,7 +253,7 @@
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             z-index: 100;
-            width: 140px; /* 固定寬度 */
+            width: 140px;
             flex-wrap: wrap;
         }
         
@@ -250,7 +271,6 @@
             box-sizing: border-box;
         }
 
-        /* 顏色定義 */
         .red { background-color: #ff4757; }
         .yellow { background-color: #feca57; }
         .black { background-color: #2f3542; }
@@ -276,17 +296,15 @@
         
         #completion-message h2 { margin-top: 0; color: green; }
 
-        /* RWD: 直向平板或手機 */
+        /* RWD */
         @media (max-width: 900px) {
             .main-container { flex-direction: column; }
-            .sidebar { width: 100%; height: auto; max-height: 40vh; }
+            .sidebar { width: 100%; height: auto; max-height: 40vh; box-sizing: border-box;}
             .game-area { padding: 10px; }
             .grid { gap: 1px; } 
-            .cell, .header-row span, .header-col span { width: 30px; height: 30px; } /* 縮小格子 */
-            .grid, .header-row, .header-col { 
-                grid-template-columns: repeat(15, 30px);
-                grid-template-rows: repeat(15, 30px);
-            }
+            .cell, .header-row span, .header-col span { width: 30px; height: 30px; }
+            .grid, .header-row { grid-template-columns: repeat(15, 30px); }
+            .grid, .header-col { grid-template-rows: repeat(15, 30px); }
         }
     </style>
 </head>
@@ -296,11 +314,11 @@
         <div class="welcome-content">
             <h1>小小兵貼地磚 🚧</h1>
             <p>
-                <b>歡迎來到座標練習遊戲！</b><br><br>
-                1. 觀察左邊的「座標提示」（例如：ㄇ-2 是紅色）。<br>
-                2. 在右邊的網格中找到對應的位置。<br>
-                3. 點擊格子，選擇正確的顏色填入。<br>
-                4. 當你填對顏色，提示文字就會自動劃掉喔！
+                <b>歡迎來到數織與座標練習！</b><br><br>
+                這裡有兩種挑戰：<br>
+                1. <b>數織挑戰 (前三題)</b>：觀察數字提示，在左上角的 5x5 區域畫出圖案。<br>
+                2. <b>座標挑戰 (第四題起)</b>：觀察座標 (例如 ㄇ-2)，填入正確顏色。<br><br>
+                點擊格子選擇顏色，答對了提示會自動劃掉喔！
             </p>
             <button class="start-btn" onclick="startGame()">開始挑戰</button>
         </div>
@@ -310,17 +328,20 @@
         <div class="sidebar">
             <h2 style="margin-top:0;">選擇題目</h2>
             <div class="btn-group">
-                <button class="task-btn" onclick="showTask('第一題')" id="btn-1">第一題</button>
-                <button class="task-btn" onclick="showTask('第二題')" id="btn-2">第二題</button>
-                <button class="task-btn" onclick="showTask('第三題')" id="btn-3">第三題</button>
-                <button class="task-btn" onclick="showTask('第四題')" id="btn-4">第四題</button>
-                <button class="task-btn" onclick="showTask('自由發揮')" id="btn-free">自由發揮</button>
+                <button class="task-btn" onclick="showTask(1)" id="btn-1">1. 烏龜</button>
+                <button class="task-btn" onclick="showTask(2)" id="btn-2">2. 蝸牛</button>
+                <button class="task-btn" onclick="showTask(3)" id="btn-3">3. 蛇</button>
+                <button class="task-btn" onclick="showTask(4)" id="btn-4">4. 基礎1</button>
+                <button class="task-btn" onclick="showTask(5)" id="btn-5">5. 基礎2</button>
+                <button class="task-btn" onclick="showTask(6)" id="btn-6">6. 愛心</button>
+                <button class="task-btn" onclick="showTask(7)" id="btn-7">7. 鑽石</button>
+                <button class="task-btn" onclick="showTask(8)" id="btn-8">8. 房子</button>
             </div>
+            <button class="task-btn" style="width:100%; margin-bottom:10px;" onclick="showTask(0)" id="btn-0">自由發揮</button>
             
             <button class="clear-btn" onclick="clearBoard()">清除所有格子</button>
             
             <hr style="width:100%; border:1px solid #eee;">
-            <h3>題目說明：</h3>
             <div id="task-display" class="task-display">請選擇上方題目開始...</div>
         </div>
 
@@ -329,23 +350,20 @@
                 <div class="grid-container">
                     <div></div> 
                     
-                    <div class="header-row">
-                        </div>
+                    <div class="header-row" id="header-row"></div>
 
-                    <div class="header-col">
-                        </div>
+                    <div class="header-col" id="header-col"></div>
 
-                    <div class="grid" id="grid">
-                        </div>
+                    <div class="grid" id="grid"></div>
                 </div>
                 
                 <div id="popup" class="color-picker-popup">
-                    <div class="color-button red" data-color="red"></div>
-                    <div class="color-button yellow" data-color="yellow"></div>
-                    <div class="color-button black" data-color="black"></div>
-                    <div class="color-button green" data-color="green"></div>
-                    <div class="color-button blue" data-color="blue"></div>
-                    <div class="color-button white" data-color="white"></div>
+                    <div class="color-button red" data-color="red" title="紅色"></div>
+                    <div class="color-button yellow" data-color="yellow" title="黃色"></div>
+                    <div class="color-button black" data-color="black" title="黑色"></div>
+                    <div class="color-button green" data-color="green" title="綠色"></div>
+                    <div class="color-button blue" data-color="blue" title="藍色"></div>
+                    <div class="color-button white" data-color="white" title="清除(白色)"></div>
                 </div>
             </div>
         </div>
@@ -358,10 +376,83 @@
     </div>
 
     <script>
-        // 遊戲數據
+        // --- 遊戲資料 ---
+        // 注意：數織題目(1-3)座標映射到左上角 5x5 (行1-5, 列ㄅ-ㄉ)
         const tasks = {
-            '自由發揮': { text: '自由發揮（請自由創作）', cells: {} },
-            '第一題': {
+            0: { 
+                title: "自由發揮", 
+                type: "free",
+                text: '<b>自由發揮時間！</b><br>請在網格上自由創作你喜歡的圖案。', 
+                cells: {} 
+            },
+            // --- 數織題 (黑色) ---
+            1: {
+                title: "烏龜",
+                type: "nonogram",
+                text: `
+                    <h4>數織挑戰：烏龜 (全黑)</h4>
+                    <div class="nonogram-hint"><b>直行 (Col):</b> 2 2 | 3 | 4 | 3 | 2 2</div>
+                    <div class="nonogram-hint"><b>橫列 (Row):</b> 1 1 1 | 5 | 3 | 5 | 1 1</div>
+                    <small>*請在左上角 5x5 範圍作答(ㄅ~ㄉ, 1~5)</small>
+                `,
+                cells: {
+                    // Row 1 (ㄅ): 1,3,5
+                    'ㄅ-1':'black', 'ㄅ-3':'black', 'ㄅ-5':'black',
+                    // Row 2 (ㄆ): 1,2,3,4,5
+                    'ㄆ-1':'black', 'ㄆ-2':'black', 'ㄆ-3':'black', 'ㄆ-4':'black', 'ㄆ-5':'black',
+                    // Row 3 (ㄇ): 2,3,4
+                    'ㄇ-2':'black', 'ㄇ-3':'black', 'ㄇ-4':'black',
+                    // Row 4 (ㄈ): 1,2,3,4,5
+                    'ㄈ-1':'black', 'ㄈ-2':'black', 'ㄈ-3':'black', 'ㄈ-4':'black', 'ㄈ-5':'black',
+                    // Row 5 (ㄉ): 1,5
+                    'ㄉ-1':'black', 'ㄉ-5':'black'
+                }
+            },
+            2: {
+                title: "蝸牛",
+                type: "nonogram",
+                text: `
+                    <h4>數織挑戰：蝸牛 (全黑)</h4>
+                    <div class="nonogram-hint"><b>直行 (Col):</b> 2 | 1 | 3 | 3 | 1</div>
+                    <div class="nonogram-hint"><b>橫列 (Row):</b> 0 | 2 | 1 2 | 5 | 0</div>
+                    <small>*請在左上角 5x5 範圍作答</small>
+                `,
+                cells: {
+                    // Row 2 (ㄆ): 3,4 (Length 2)
+                    'ㄆ-3':'black', 'ㄆ-4':'black',
+                    // Row 3 (ㄇ): 1, 3,4 (Length 1, 2)
+                    'ㄇ-1':'black', 'ㄇ-3':'black', 'ㄇ-4':'black',
+                    // Row 4 (ㄈ): 1,2,3,4,5 (Length 5)
+                    'ㄈ-1':'black', 'ㄈ-2':'black', 'ㄈ-3':'black', 'ㄈ-4':'black', 'ㄈ-5':'black'
+                }
+            },
+            3: {
+                title: "蛇",
+                type: "nonogram",
+                text: `
+                    <h4>數織挑戰：蛇 (全黑)</h4>
+                    <div class="nonogram-hint"><b>直行 (Col):</b> 3 1 | 1 1 | 1 | 3 1 | 5</div>
+                    <div class="nonogram-hint"><b>橫列 (Row):</b> 5 | 1 1 | 3 1 | 1 1 | 3 1</div>
+                    <small>*請在左上角 5x5 範圍作答</small>
+                `,
+                cells: {
+                    // 根據數字推導的 Snake 圖形
+                    // R1: 12345 (5)
+                    'ㄅ-1':'black','ㄅ-2':'black','ㄅ-3':'black','ㄅ-4':'black','ㄅ-5':'black',
+                    // R2: 1, 5 (1 1)
+                    'ㄆ-1':'black', 'ㄆ-5':'black',
+                    // R3: 1,2,3, 5 (3 1)
+                    'ㄇ-1':'black','ㄇ-2':'black','ㄇ-3':'black', 'ㄇ-5':'black',
+                    // R4: 1, 5 (1 1)
+                    'ㄈ-1':'black', 'ㄈ-5':'black',
+                    // R5: 1,2,3, 5 (3 1)
+                    'ㄉ-1':'black','ㄉ-2':'black','ㄉ-3':'black', 'ㄉ-5':'black'
+                }
+            },
+            // --- 座標題 (原題目順延) ---
+            4: {
+                title: "基礎1",
+                type: "coord",
                 text: '<b style="color:red">紅色：</b>ㄇ-2, ㄇ-4, ㄈ-1, ㄈ-3, ㄈ-5<br><br><b style="color:black">黑色：</b>ㄋ-3<br><br><b style="color:green">綠色：</b>ㄉ-1, ㄉ-5, ㄊ-2, ㄊ-4',
                 cells: {
                     'ㄇ-2': 'red', 'ㄇ-4': 'red', 'ㄈ-1': 'red', 'ㄈ-3': 'red', 'ㄈ-5': 'red',
@@ -369,6 +460,222 @@
                     'ㄉ-1': 'green', 'ㄉ-5': 'green', 'ㄊ-2': 'green', 'ㄊ-4': 'green'
                 }
             },
-            '第二題': {
+            5: {
+                title: "基礎2",
+                type: "coord",
                 text: '<b style="color:red">紅色：</b>ㄉ-2, ㄊ-2, ㄊ-4, ㄋ-3<br><br><b style="background:black;color:yellow">黃色：</b>ㄅ-4, ㄆ-4, ㄆ-5, ㄇ-4, ㄇ-6<br><br><b style="color:blue">藍色：</b>ㄈ-3, ㄈ-4, ㄉ-3, ㄉ-4, ㄊ-3',
-                cells
+                cells: {
+                    'ㄉ-2': 'red', 'ㄊ-2': 'red', 'ㄊ-4': 'red', 'ㄋ-3': 'red',
+                    'ㄅ-4': 'yellow', 'ㄆ-4': 'yellow', 'ㄆ-5': 'yellow', 'ㄇ-4': 'yellow', 'ㄇ-6': 'yellow',
+                    'ㄈ-3': 'blue', 'ㄈ-4': 'blue', 'ㄉ-3': 'blue', 'ㄉ-4': 'blue', 'ㄊ-3': 'blue'
+                }
+            },
+            6: {
+                title: "愛心",
+                type: "coord",
+                text: '<b style="color:red">紅色：</b>ㄆ-2, ㄆ-4, ㄇ-1, ㄇ-3, ㄇ-5, ㄈ-2, ㄈ-4, ㄉ-3<br><br>這是一個簡單的愛心圖案！',
+                cells: {
+                    'ㄆ-2':'red', 'ㄆ-4':'red',
+                    'ㄇ-1':'red', 'ㄇ-3':'red', 'ㄇ-5':'red',
+                    'ㄈ-2':'red', 'ㄈ-4':'red',
+                    'ㄉ-3':'red'
+                }
+            },
+            7: {
+                title: "鑽石",
+                type: "coord",
+                text: '<b style="color:blue">藍色：</b>ㄅ-3, ㄆ-2, ㄆ-4, ㄇ-1, ㄇ-5, ㄈ-2, ㄈ-4, ㄉ-3<br><br><b style="background:black;color:yellow">黃色：</b>ㄇ-3 (中間發光)',
+                cells: {
+                    'ㄅ-3':'blue',
+                    'ㄆ-2':'blue', 'ㄆ-4':'blue',
+                    'ㄇ-1':'blue', 'ㄇ-5':'blue',
+                    'ㄈ-2':'blue', 'ㄈ-4':'blue',
+                    'ㄉ-3':'blue',
+                    'ㄇ-3':'yellow'
+                }
+            },
+            8: {
+                title: "房子",
+                type: "coord",
+                text: '<b style="color:red">紅色(屋頂)：</b>ㄅ-3, ㄆ-2, ㄆ-3, ㄆ-4<br><br><b style="color:green">綠色(牆壁)：</b>ㄇ-2, ㄇ-3, ㄇ-4, ㄈ-2, ㄈ-4<br><br><b style="background:black;color:yellow">黃色(門)：</b>ㄈ-3',
+                cells: {
+                    'ㄅ-3':'red',
+                    'ㄆ-2':'red', 'ㄆ-3':'red', 'ㄆ-4':'red',
+                    'ㄇ-2':'green', 'ㄇ-3':'green', 'ㄇ-4':'green',
+                    'ㄈ-2':'green', 'ㄈ-4':'green',
+                    'ㄈ-3':'yellow'
+                }
+            }
+        };
+
+        let currentTaskId = 0;
+        let activeCell = null;
+
+        // --- 初始化 ---
+        const rowLabels = ['ㄅ','ㄆ','ㄇ','ㄈ','ㄉ','ㄊ','ㄋ','ㄌ','ㄍ','ㄎ','ㄏ','ㄐ','ㄑ','ㄒ','ㄓ']; // 15個
+        const colCount = 15;
+
+        function init() {
+            const grid = document.getElementById('grid');
+            const headerRow = document.getElementById('header-row');
+            const headerCol = document.getElementById('header-col');
+
+            // 1. 生成上方數字標頭 (1-15)
+            for (let i = 1; i <= colCount; i++) {
+                let span = document.createElement('span');
+                span.innerText = i;
+                headerRow.appendChild(span);
+            }
+
+            // 2. 生成左側注音標頭 (ㄅ-ㄓ)
+            rowLabels.forEach(label => {
+                let span = document.createElement('span');
+                span.innerText = label;
+                headerCol.appendChild(span);
+            });
+
+            // 3. 生成 15x15 網格
+            for (let r = 0; r < rowLabels.length; r++) {
+                for (let c = 1; c <= colCount; c++) {
+                    let cell = document.createElement('div');
+                    cell.className = 'cell';
+                    // 賦予座標 ID，例如 "ㄅ-1"
+                    let coordId = rowLabels[r] + '-' + c;
+                    cell.dataset.id = coordId;
+                    
+                    cell.onclick = function(e) {
+                        openColorPicker(e, cell);
+                    };
+                    
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        // --- 核心功能 ---
+
+        function startGame() {
+            document.getElementById('welcome-screen').style.display = 'none';
+        }
+
+        function showTask(id) {
+            currentTaskId = id;
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.task-btn').forEach(btn => btn.classList.remove('active'));
+            let activeBtn = document.getElementById('btn-' + id);
+            if(activeBtn) activeBtn.classList.add('active');
+
+            // 更新題目文字
+            const task = tasks[id];
+            document.getElementById('task-display').innerHTML = task.text;
+
+            // 清除版面 (可選，看是否要讓學生保留上一題的塗鴉)
+            // clearBoard(); 
+            // 建議：切換題目時最好檢查一下，這裡我們預設不自動清除，讓學生自己按
+        }
+
+        function clearBoard() {
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.style.backgroundColor = 'white';
+                cell.dataset.color = 'white';
+            });
+        }
+
+        // 顏色選擇器邏輯
+        const popup = document.getElementById('popup');
+
+        function openColorPicker(e, cell) {
+            activeCell = cell;
+            
+            // 計算位置，讓 popup 出現在格子附近
+            const rect = cell.getBoundingClientRect();
+            // 修正 popup 位置，避免超出視窗
+            let top = rect.bottom + window.scrollY;
+            let left = rect.left + window.scrollX;
+            
+            // 簡單防止超出右邊界
+            if (left + 150 > window.innerWidth) {
+                left = window.innerWidth - 160;
+            }
+
+            popup.style.top = top + 'px';
+            popup.style.left = left + 'px';
+            popup.classList.add('show');
+            
+            e.stopPropagation(); // 防止冒泡
+        }
+
+        // 點擊顏色按鈕
+        document.querySelectorAll('.color-button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (activeCell) {
+                    const color = btn.dataset.color;
+                    const cssColor = getComputedStyle(btn).backgroundColor;
+                    
+                    activeCell.style.backgroundColor = cssColor;
+                    activeCell.dataset.color = color; // 儲存顏色名稱 (red, yellow...)
+                    
+                    checkAnswer(); // 每次填色後檢查
+                }
+                popup.classList.remove('show');
+                activeCell = null;
+            });
+        });
+
+        // 點擊其他地方關閉 Popup
+        document.addEventListener('click', (e) => {
+            if (!popup.contains(e.target) && !e.target.classList.contains('cell')) {
+                popup.classList.remove('show');
+                activeCell = null;
+            }
+        });
+
+        // 檢查答案邏輯
+        function checkAnswer() {
+            if (tasks[currentTaskId].type === 'free') return; // 自由發揮不檢查
+
+            const targetCells = tasks[currentTaskId].cells;
+            let isComplete = true;
+
+            // 1. 檢查所有目標格子是否填對顏色
+            for (let coord in targetCells) {
+                let cell = document.querySelector(`.cell[data-id="${coord}"]`);
+                if (!cell || cell.dataset.color !== targetCells[coord]) {
+                    isComplete = false;
+                    break; // 只要有一格錯就沒過
+                }
+            }
+
+            // 2. (嚴格模式) 檢查是否有多填了不該填的格子
+            if (isComplete) {
+                document.querySelectorAll('.cell').forEach(cell => {
+                    const myColor = cell.dataset.color;
+                    const myId = cell.dataset.id;
+                    // 如果這格有填色(且不是白色)，但它不在目標清單中 -> 錯誤
+                    if (myColor && myColor !== 'white' && !targetCells[myId]) {
+                        isComplete = false;
+                    }
+                });
+            }
+
+            if (isComplete) {
+                showCompletion();
+            }
+        }
+
+        function showCompletion() {
+            document.getElementById('completion-message').style.display = 'block';
+        }
+
+        function closeCompletionMessage() {
+            document.getElementById('completion-message').style.display = 'none';
+        }
+
+        // 啟動
+        init();
+        // 預設不選題目，或選第一題
+        // showTask(1); 
+    </script>
+</body>
+</html>
