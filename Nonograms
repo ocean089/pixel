@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>平板數織教學</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --sidebar-bg: #dde1e7;
+            --primary-color: #333;
+            --accent-color: #4a90e2;
+            --cross-color: #e74c3c;
+            --cell-size: 48px; /* 平板友善尺寸 */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            height: 100vh;
+            display: flex;
+            overflow: hidden; /* 防止整體捲動 */
+            user-select: none; /* 禁止選取文字 */
+            -webkit-user-select: none;
+            touch-action: manipulation; /* 優化觸控 */
+        }
+
+        /* 左欄：控制區 */
+        .sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        /* 右欄：遊戲區 */
+        .game-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; color: var(--primary-color); }
+        h2 { margin: 0; font-size: 1.2rem; color: #666; }
+
+        /* 控制元件樣式 */
+        select {
+            font-size: 1.2rem;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            width: 100%;
+        }
+
+        .tools {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tool-btn {
+            flex: 1;
+            padding: 15px;
+            font-size: 1.2rem;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tool-btn.active {
+            border-color: var(--accent-color);
+            background-color: #e6f0fa;
+            color: var(--accent-color);
+            font-weight: bold;
+            box-shadow: 0 0 8px rgba(74, 144, 226, 0.3);
+        }
+
+        .action-btn {
+            padding: 12px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            margin-top: 5px;
+        }
+
+        .btn-check { background-color: #27ae60; }
+        .btn-reset { background-color: #95a5a6; }
+
+        /* 遊戲盤面 (CSS Grid) */
+        .board-container {
+            display: grid;
+            /* 定義網格：第一列是上方提示，第一欄是左方提示 */
+            grid-template-columns: auto repeat(5, var(--cell-size));
+            grid-template-rows: auto repeat(5, var(--cell-size));
+            gap: 2px;
+            background-color: #999; /* 格線顏色 */
+            border: 2px solid #333;
+        }
+
+        /* 提示區域 */
+        .clue {
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #333;
+            line-height: 1.2;
+        }
+
+        .clue-col {
+            flex-direction: column; /* 上方提示垂直排列 */
+            justify-content: flex-end;
+            padding-bottom: 5px;
+        }
+        
+        .clue-row {
+            justify-content: flex-end; /* 左方提示靠右對齊 */
+            padding-right: 8px;
+            gap: 5px;
+        }
+
+        /* 格子樣式 */
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            background-color: #fff;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+        }
+
+        .cell.filled {
+            background-color: #2c3e50;
+        }
+
+        .cell.crossed::after {
+            content: '×';
+            color: var(--cross-color);
+            font-weight: bold;
+            font-size: 32px;
+        }
+
+        /* 頂角空白格 */
+        .corner { background-color: transparent; border: none; }
+
+        /* RWD: 手機直向時改為上下排列 */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { 
+                width: 100%; 
+                box-sizing: border-box; 
+                flex-direction: row; 
+                flex-wrap: wrap; 
+                padding: 10px;
+                gap: 10px;
+            }
+            .sidebar > * { flex: 1; min-width: 120px; }
+            .tools { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div>
+            <h1>數織遊戲</h1>
+            <h2>選關卡</h2>
+        </div>
+        
+        <select id="levelSelect">
+            <option value="0">Level 1: 烏龜 (Turtle)</option>
+            <option value="1">Level 2: 蝸牛 (Snail)</option>
+            <option value="2">Level 3: 蛇 (Snake)</option>
+        </select>
+
+        <div class="tools">
+            <button class="tool-btn active" id="btnFill" onclick="setTool('fill')">
+                <span>✏️</span> 塗黑
+            </button>
+            <button class="tool-btn" id="btnCross" onclick="setTool('cross')">
+                <span>❌</span> 標記
+            </button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
+            <button class="action-btn btn-check" onclick="checkWin()">檢查答案</button>
+            <button class="action-btn btn-reset" onclick="resetBoard()">重置</button>
+        </div>
+    </div>
+
+    <div class="game-area">
+        <div id="board" class="board-container">
+            </div>
+    </div>
+
+    <script>
+        // 關卡數據
+        const levels = [
+            {
+                name: "Turtle",
+                rows: [[1,1,1], [5], [3], [5], [1,1]],
+                cols: [[2,2], [3], [4], [3], [2,2]],
+                solution: [
+                    [1,0,1,0,1], // 1=黑, 0=白
+                    [1,1,1,1,1],
+                    [0,1,1,1,0],
+                    [1,1,1,1,1],
+                    [1,0,0,0,1]
+                ]
+            },
+            {
+                name: "Snail",
+                rows: [[0], [2], [1,2], [5], [0]],
+                cols: [[2], [1], [3], [3], [1]],
+                solution: [
+                    [0,0,0,0,0],
+                    [1,1,0,0,0],
+                    [1,0,1,1,0],
+                    [1,1,1,1,1],
+                    [0,0,0,0,0]
+                ]
+            },
+            {
+                name: "Snake",
+                rows: [[5], [1,1], [3,1], [1,1], [3,1]],
+                cols: [[3,1], [1,1,1], [1,3], [1], [5]],
+                solution: [
+                    [1,1,1,1,1],
+                    [1,0,0,0,1],
+                    [1,1,1,0,1],
+                    [1,0,0,0,1],
+                    [1,1,1,0,1]
+                ]
+            }
+        ];
+
+        let currentLevelIndex = 0;
+        let currentTool = 'fill'; // 'fill' or 'cross'
+        let userGrid = []; // 儲存玩家狀態: 0=空, 1=黑, 2=叉
+
+        // 初始化
+        window.onload = () => {
+            document.getElementById('levelSelect').addEventListener('change', (e) => {
+                loadLevel(e.target.value);
+            });
+            loadLevel(0);
+        };
+
+        function setTool(tool) {
+            currentTool = tool;
+            document.getElementById('btnFill').classList.toggle('active', tool === 'fill');
+            document.getElementById('btnCross').classList.toggle('active', tool === 'cross');
+        }
+
+        function loadLevel(index) {
+            currentLevelIndex = index;
+            const level = levels[index];
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            
+            // 初始化玩家網格 (5x5 全0)
+            userGrid = Array(5).fill().map(() => Array(5).fill(0));
+
+            // 1. 生成左上角空白
+            const corner = document.createElement('div');
+            corner.className = 'corner';
+            board.appendChild(corner);
+
+            // 2. 生成上方提示 (Columns)
+            level.cols.forEach(clueArr => {
+                const cell = document.createElement('div');
+                cell.className = 'clue clue-col';
+                // 過濾掉0，每個數字換行
+                cell.innerHTML = clueArr.filter(n=>n>0).join('<br>'); 
+                board.appendChild(cell);
+            });
+
+            // 3. 生成列提示 + 遊戲格子
+            for (let r = 0; r < 5; r++) {
+                // 左方提示 (Rows)
+                const clueCell = document.createElement('div');
+                clueCell.className = 'clue clue-row';
+                clueCell.innerText = level.rows[r].filter(n=>n>0).join(' ');
+                board.appendChild(clueCell);
+
+                // 5個格子
+                for (let c = 0; c < 5; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    
+                    // 點擊事件
+                    cell.addEventListener('pointerdown', () => handleCellClick(r, c, cell));
+                    
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        function handleCellClick(r, c, cellElement) {
+            const currentState = userGrid[r][c];
+            
+            if (currentTool === 'fill') {
+                // 如果已經是填色，就取消；否則填色
+                if (currentState === 1) {
+                    userGrid[r][c] = 0;
+                    cellElement.classList.remove('filled');
+                } else {
+                    userGrid[r][c] = 1;
+                    cellElement.classList.remove('crossed');
+                    cellElement.classList.add('filled');
+                }
+            } else if (currentTool === 'cross') {
+                // 如果已經是打叉，就取消；否則打叉
+                if (currentState === 2) {
+                    userGrid[r][c] = 0;
+                    cellElement.classList.remove('crossed');
+                } else {
+                    userGrid[r][c] = 2;
+                    cellElement.classList.remove('filled');
+                    cellElement.classList.add('crossed');
+                }
+            }
+        }
+
+        function resetBoard() {
+            loadLevel(currentLevelIndex);
+        }
+
+        function checkWin() {
+            const currentSolution = levels[currentLevelIndex].solution;
+            let isCorrect = true;
+
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    // 玩家填黑(1) 必須等於 解答的填黑(1)
+                    // 玩家打叉(2) 或 空白(0) 都視為 解答的空白(0)
+                    const playerFilled = userGrid[r][c] === 1;
+                    const solutionFilled = currentSolution[r][c] === 1;
+
+                    if (playerFilled !== solutionFilled) {
+                        isCorrect = false;
+                        break;
+                    }
+                }
+            }
+
+            if (isCorrect) {
+                alert("🎉 恭喜！你成功解開了謎題！");
+            } else {
+                alert("再試試看，有些地方不太對喔！");
+            }
+        }
+    </script>
+</body>
+</html>
