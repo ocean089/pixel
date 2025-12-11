@@ -21,9 +21,10 @@
             flex-direction: column;
             overflow: hidden;
             user-select: none;
+            -webkit-user-select: none; /* Safari/Chrome */
         }
 
-        /* --- 1. 歡迎說明頁 (Splash Screen) --- */
+        /* --- 歡迎頁 --- */
         #welcome-screen {
             position: fixed;
             top: 0;
@@ -50,19 +51,6 @@
             width: 80%;
         }
 
-        .welcome-content h1 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        .welcome-content p {
-            font-size: 1.2rem;
-            line-height: 1.6;
-            color: #555;
-            margin-bottom: 30px;
-            text-align: left;
-        }
-
         .start-btn {
             background-color: var(--primary-blue);
             color: white;
@@ -71,15 +59,10 @@
             border: none;
             border-radius: 50px;
             cursor: pointer;
-            transition: transform 0.2s;
             font-weight: bold;
         }
 
-        .start-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* --- 主版面配置 (左右兩欄) --- */
+        /* --- 主版面 --- */
         .main-container {
             display: flex;
             height: 100%;
@@ -88,7 +71,7 @@
             gap: 20px;
         }
 
-        /* 左欄：控制區與題目 */
+        /* 左側欄 */
         .sidebar {
             width: 320px;
             background: white;
@@ -100,7 +83,7 @@
             overflow-y: auto;
         }
 
-        /* 右欄：遊戲網格區 */
+        /* 右側遊戲區 */
         .game-area {
             flex: 1;
             display: flex;
@@ -111,9 +94,10 @@
             border-radius: 15px;
             padding: 20px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: relative;
         }
 
-        /* 按鈕樣式 */
+        /* 按鈕群組 */
         .btn-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -122,12 +106,11 @@
         }
 
         button.task-btn {
-            padding: 8px;
-            font-size: 0.95rem;
+            padding: 12px; /* 加大按鈕 */
+            font-size: 1rem;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: background 0.2s;
             background-color: #e0e0e0;
             color: #333;
         }
@@ -143,16 +126,15 @@
             color: white;
             width: 100%;
             margin-bottom: 10px;
-            padding: 10px;
+            padding: 12px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-size: 1rem;
         }
 
-        /* 題目說明文字區 */
         .task-display {
-            font-size: 1rem;
+            font-size: 1.1rem;
             line-height: 1.6;
             text-align: left;
             padding: 15px;
@@ -163,34 +145,24 @@
             overflow-y: auto;
         }
 
-        .task-display h4 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            color: #333;
-            border-bottom: 2px solid var(--minion-yellow);
-            padding-bottom: 5px;
-            display: inline-block;
-        }
-
-        /* 數織提示樣式 */
         .nonogram-hint {
             margin-bottom: 10px;
             font-family: monospace;
             background: #eee;
-            padding: 5px;
+            padding: 8px;
             border-radius: 4px;
+            font-size: 1.1rem;
         }
-        
+
         .task-display span.correct {
             color: #ccc !important;
             text-decoration: line-through;
             opacity: 0.6;
         }
 
-        /* --- 網格系統 --- */
+        /* --- 網格設定 --- */
         .grid-wrapper {
             display: inline-block;
-            position: relative;
         }
 
         .grid-container {
@@ -199,76 +171,99 @@
             grid-template-rows: 40px auto;
         }
 
-        /* 標頭樣式 */
         .header-row {
             grid-column: 2;
             display: grid;
-            grid-template-columns: repeat(15, 36px);
+            grid-template-columns: repeat(15, 38px);
             justify-items: center;
             align-items: center;
             font-weight: bold;
             color: #555;
+            font-size: 1.1rem;
         }
 
         .header-col {
             grid-row: 2;
             display: grid;
-            grid-template-rows: repeat(15, 36px);
+            grid-template-rows: repeat(15, 38px);
             justify-items: center;
             align-items: center;
             font-weight: bold;
             color: #555;
+            font-size: 1.1rem;
         }
 
-        /* 實際格子區 */
         .grid {
             grid-column: 2;
             grid-row: 2;
             display: grid;
-            grid-template-columns: repeat(15, 36px);
-            grid-template-rows: repeat(15, 36px);
+            grid-template-columns: repeat(15, 38px);
+            grid-template-rows: repeat(15, 38px);
             border: 2px solid #333;
             background-color: #999;
             gap: 1px;
         }
 
         .cell {
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             background-color: white;
             cursor: pointer;
         }
-        
-        .cell:active {
-            opacity: 0.8;
+
+        /* --- 平板優化：中央彈出式選色單 --- */
+        .color-picker-overlay {
+            display: none;
+            position: fixed; /* 固定在螢幕 */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* 半透明黑底 */
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* 顏色選擇器 Popup */
-        .color-picker-popup {
-            display: none;
-            position: absolute;
-            background-color: white;
-            border: 2px solid #333;
-            padding: 5px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            z-index: 100;
-            width: 140px;
-            flex-wrap: wrap;
-        }
-        
-        .color-picker-popup.show {
+        .color-picker-overlay.show {
             display: flex;
         }
 
+        .color-picker-box {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            max-width: 300px;
+            border: 5px solid var(--minion-yellow);
+        }
+
+        .color-picker-title {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+            font-size: 1.2rem;
+        }
+
         .color-button {
-            width: 35px;
-            height: 35px;
-            margin: 5px;
+            width: 60px; /* 加大按鈕適合觸控 */
+            height: 60px;
             border-radius: 50%;
             cursor: pointer;
-            border: 2px solid #ddd;
+            border: 3px solid #ddd;
             box-sizing: border-box;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+
+        .color-button:active {
+            transform: scale(0.9);
         }
 
         .red { background-color: #ff4757; }
@@ -276,9 +271,9 @@
         .black { background-color: #2f3542; }
         .green { background-color: #2ed573; }
         .blue { background-color: #1e90ff; }
-        .white { background-color: #ffffff; }
+        .white { background-color: #ffffff; border-color: #333; } /* 白色加深邊框 */
 
-        /* 完成訊息 */
+        /* --- 完成訊息 --- */
         #completion-message {
             display: none;
             position: fixed;
@@ -290,21 +285,21 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             text-align: center;
-            z-index: 2000;
+            z-index: 3000;
             border: 5px solid var(--primary-blue);
+            width: 300px;
         }
-        
-        #completion-message h2 { margin-top: 0; color: green; }
 
-        /* RWD */
+        /* --- RWD (手機/平板直向) --- */
         @media (max-width: 900px) {
             .main-container { flex-direction: column; }
-            .sidebar { width: 100%; height: auto; max-height: 40vh; box-sizing: border-box;}
-            .game-area { padding: 10px; }
-            .grid { gap: 1px; } 
-            .cell, .header-row span, .header-col span { width: 30px; height: 30px; }
-            .grid, .header-row { grid-template-columns: repeat(15, 30px); }
-            .grid, .header-col { grid-template-rows: repeat(15, 30px); }
+            .sidebar { width: 100%; height: auto; max-height: 35vh; box-sizing: border-box;}
+            .game-area { padding: 10px; align-items: flex-start; }
+            
+            /* 縮小格子以適應窄螢幕 */
+            .cell, .header-row span, .header-col span { width: 32px; height: 32px; font-size: 0.9rem;}
+            .grid, .header-row { grid-template-columns: repeat(15, 32px); }
+            .grid, .header-col { grid-template-rows: repeat(15, 32px); }
         }
     </style>
 </head>
@@ -313,12 +308,12 @@
     <div id="welcome-screen">
         <div class="welcome-content">
             <h1>小小兵貼地磚 🚧</h1>
-            <p>
-                <b>歡迎來到數織與座標練習！</b><br><br>
-                這裡有兩種挑戰：<br>
-                1. <b>數織挑戰 (前三題)</b>：觀察數字提示，在左上角的 5x5 區域畫出圖案。<br>
-                2. <b>座標挑戰 (第四題起)</b>：觀察座標 (例如 ㄇ-2)，填入正確顏色。<br><br>
-                點擊格子選擇顏色，答對了提示會自動劃掉喔！
+            <p style="text-align: left;">
+                <b>操作說明：</b><br>
+                1. 點選你要挑戰的題目。<br>
+                2. 在右側網格點選任何一格。<br>
+                3. 在跳出的選單中選擇顏色。<br>
+                4. 完成題目指定的圖案！
             </p>
             <button class="start-btn" onclick="startGame()">開始挑戰</button>
         </div>
@@ -326,7 +321,7 @@
 
     <div class="main-container">
         <div class="sidebar">
-            <h2 style="margin-top:0;">選擇題目</h2>
+            <h2 style="margin-top:0;">題目列表</h2>
             <div class="btn-group">
                 <button class="task-btn" onclick="showTask(1)" id="btn-1">1. 烏龜</button>
                 <button class="task-btn" onclick="showTask(2)" id="btn-2">2. 蝸牛</button>
@@ -348,111 +343,88 @@
         <div class="game-area">
             <div class="grid-wrapper">
                 <div class="grid-container">
-                    <div></div> 
-                    
-                    <div class="header-row" id="header-row"></div>
-
+                    <div></div> <div class="header-row" id="header-row"></div>
                     <div class="header-col" id="header-col"></div>
-
                     <div class="grid" id="grid"></div>
-                </div>
-                
-                <div id="popup" class="color-picker-popup">
-                    <div class="color-button red" data-color="red" title="紅色"></div>
-                    <div class="color-button yellow" data-color="yellow" title="黃色"></div>
-                    <div class="color-button black" data-color="black" title="黑色"></div>
-                    <div class="color-button green" data-color="green" title="綠色"></div>
-                    <div class="color-button blue" data-color="blue" title="藍色"></div>
-                    <div class="color-button white" data-color="white" title="清除(白色)"></div>
                 </div>
             </div>
         </div>
     </div>
 
+    <div id="color-picker-overlay" class="color-picker-overlay" onclick="closeColorPicker()">
+        <div class="color-picker-box" onclick="event.stopPropagation()">
+            <div class="color-picker-title">請選擇顏色</div>
+            <div class="color-button red" data-color="red" title="紅色"></div>
+            <div class="color-button yellow" data-color="yellow" title="黃色"></div>
+            <div class="color-button black" data-color="black" title="黑色"></div>
+            <div class="color-button green" data-color="green" title="綠色"></div>
+            <div class="color-button blue" data-color="blue" title="藍色"></div>
+            <div class="color-button white" data-color="white" title="清除(白色)"></div>
+        </div>
+    </div>
+
     <div id="completion-message">
-        <h2>🎉 完成！恭喜你！</h2>
-        <p>這張地磚貼得很完美喔！</p>
+        <h2 style="color: green;">🎉 完成！</h2>
+        <p>你答對了！這張地磚貼得很完美！</p>
         <button class="start-btn" style="font-size:1rem; padding:10px 20px;" onclick="closeCompletionMessage()">太棒了</button>
     </div>
 
     <script>
-        // --- 遊戲資料 ---
-        // 注意：數織題目(1-3)座標映射到左上角 5x5 (行1-5, 列ㄅ-ㄉ)
+        // --- 題目資料 ---
         const tasks = {
             0: { 
-                title: "自由發揮", 
-                type: "free",
+                title: "自由發揮", type: "free",
                 text: '<b>自由發揮時間！</b><br>請在網格上自由創作你喜歡的圖案。', 
                 cells: {} 
             },
-            // --- 數織題 (黑色) ---
+            // --- 第一題：更新為您指定的座標 ---
             1: {
-                title: "烏龜",
-                type: "nonogram",
+                title: "烏龜", type: "nonogram",
                 text: `
                     <h4>數織挑戰：烏龜 (全黑)</h4>
                     <div class="nonogram-hint"><b>直行 (Col):</b> 2 2 | 3 | 4 | 3 | 2 2</div>
                     <div class="nonogram-hint"><b>橫列 (Row):</b> 1 1 1 | 5 | 3 | 5 | 1 1</div>
-                    <small>*請在左上角 5x5 範圍作答(ㄅ~ㄉ, 1~5)</small>
+                    <small>請依照數字提示塗黑格子</small>
                 `,
                 cells: {
-                    // Row 1 (ㄅ): 1,3,5
+                    // 根據使用者要求更新
                     'ㄅ-1':'black', 'ㄅ-3':'black', 'ㄅ-5':'black',
-                    // Row 2 (ㄆ): 1,2,3,4,5
                     'ㄆ-1':'black', 'ㄆ-2':'black', 'ㄆ-3':'black', 'ㄆ-4':'black', 'ㄆ-5':'black',
-                    // Row 3 (ㄇ): 2,3,4
                     'ㄇ-2':'black', 'ㄇ-3':'black', 'ㄇ-4':'black',
-                    // Row 4 (ㄈ): 1,2,3,4,5
                     'ㄈ-1':'black', 'ㄈ-2':'black', 'ㄈ-3':'black', 'ㄈ-4':'black', 'ㄈ-5':'black',
-                    // Row 5 (ㄉ): 1,5
                     'ㄉ-1':'black', 'ㄉ-5':'black'
                 }
             },
             2: {
-                title: "蝸牛",
-                type: "nonogram",
+                title: "蝸牛", type: "nonogram",
                 text: `
                     <h4>數織挑戰：蝸牛 (全黑)</h4>
-                    <div class="nonogram-hint"><b>直行 (Col):</b> 2 | 1 | 3 | 3 | 1</div>
-                    <div class="nonogram-hint"><b>橫列 (Row):</b> 0 | 2 | 1 2 | 5 | 0</div>
-                    <small>*請在左上角 5x5 範圍作答</small>
+                    <div class="nonogram-hint"><b>直行:</b> 2 | 1 | 3 | 3 | 1</div>
+                    <div class="nonogram-hint"><b>橫列:</b> 0 | 2 | 1 2 | 5 | 0</div>
                 `,
                 cells: {
-                    // Row 2 (ㄆ): 3,4 (Length 2)
                     'ㄆ-3':'black', 'ㄆ-4':'black',
-                    // Row 3 (ㄇ): 1, 3,4 (Length 1, 2)
                     'ㄇ-1':'black', 'ㄇ-3':'black', 'ㄇ-4':'black',
-                    // Row 4 (ㄈ): 1,2,3,4,5 (Length 5)
                     'ㄈ-1':'black', 'ㄈ-2':'black', 'ㄈ-3':'black', 'ㄈ-4':'black', 'ㄈ-5':'black'
                 }
             },
             3: {
-                title: "蛇",
-                type: "nonogram",
+                title: "蛇", type: "nonogram",
                 text: `
                     <h4>數織挑戰：蛇 (全黑)</h4>
-                    <div class="nonogram-hint"><b>直行 (Col):</b> 3 1 | 1 1 | 1 | 3 1 | 5</div>
-                    <div class="nonogram-hint"><b>橫列 (Row):</b> 5 | 1 1 | 3 1 | 1 1 | 3 1</div>
-                    <small>*請在左上角 5x5 範圍作答</small>
+                    <div class="nonogram-hint"><b>直行:</b> 3 1 | 1 1 | 1 | 3 1 | 5</div>
+                    <div class="nonogram-hint"><b>橫列:</b> 5 | 1 1 | 3 1 | 1 1 | 3 1</div>
                 `,
                 cells: {
-                    // 根據數字推導的 Snake 圖形
-                    // R1: 12345 (5)
                     'ㄅ-1':'black','ㄅ-2':'black','ㄅ-3':'black','ㄅ-4':'black','ㄅ-5':'black',
-                    // R2: 1, 5 (1 1)
                     'ㄆ-1':'black', 'ㄆ-5':'black',
-                    // R3: 1,2,3, 5 (3 1)
                     'ㄇ-1':'black','ㄇ-2':'black','ㄇ-3':'black', 'ㄇ-5':'black',
-                    // R4: 1, 5 (1 1)
                     'ㄈ-1':'black', 'ㄈ-5':'black',
-                    // R5: 1,2,3, 5 (3 1)
                     'ㄉ-1':'black','ㄉ-2':'black','ㄉ-3':'black', 'ㄉ-5':'black'
                 }
             },
-            // --- 座標題 (原題目順延) ---
             4: {
-                title: "基礎1",
-                type: "coord",
+                title: "基礎1", type: "coord",
                 text: '<b style="color:red">紅色：</b>ㄇ-2, ㄇ-4, ㄈ-1, ㄈ-3, ㄈ-5<br><br><b style="color:black">黑色：</b>ㄋ-3<br><br><b style="color:green">綠色：</b>ㄉ-1, ㄉ-5, ㄊ-2, ㄊ-4',
                 cells: {
                     'ㄇ-2': 'red', 'ㄇ-4': 'red', 'ㄈ-1': 'red', 'ㄈ-3': 'red', 'ㄈ-5': 'red',
@@ -461,8 +433,7 @@
                 }
             },
             5: {
-                title: "基礎2",
-                type: "coord",
+                title: "基礎2", type: "coord",
                 text: '<b style="color:red">紅色：</b>ㄉ-2, ㄊ-2, ㄊ-4, ㄋ-3<br><br><b style="background:black;color:yellow">黃色：</b>ㄅ-4, ㄆ-4, ㄆ-5, ㄇ-4, ㄇ-6<br><br><b style="color:blue">藍色：</b>ㄈ-3, ㄈ-4, ㄉ-3, ㄉ-4, ㄊ-3',
                 cells: {
                     'ㄉ-2': 'red', 'ㄊ-2': 'red', 'ㄊ-4': 'red', 'ㄋ-3': 'red',
@@ -471,80 +442,55 @@
                 }
             },
             6: {
-                title: "愛心",
-                type: "coord",
-                text: '<b style="color:red">紅色：</b>ㄆ-2, ㄆ-4, ㄇ-1, ㄇ-3, ㄇ-5, ㄈ-2, ㄈ-4, ㄉ-3<br><br>這是一個簡單的愛心圖案！',
-                cells: {
-                    'ㄆ-2':'red', 'ㄆ-4':'red',
-                    'ㄇ-1':'red', 'ㄇ-3':'red', 'ㄇ-5':'red',
-                    'ㄈ-2':'red', 'ㄈ-4':'red',
-                    'ㄉ-3':'red'
-                }
+                title: "愛心", type: "coord",
+                text: '<b style="color:red">紅色：</b>ㄆ-2, ㄆ-4, ㄇ-1, ㄇ-3, ㄇ-5, ㄈ-2, ㄈ-4, ㄉ-3',
+                cells: { 'ㄆ-2':'red', 'ㄆ-4':'red', 'ㄇ-1':'red', 'ㄇ-3':'red', 'ㄇ-5':'red', 'ㄈ-2':'red', 'ㄈ-4':'red', 'ㄉ-3':'red' }
             },
             7: {
-                title: "鑽石",
-                type: "coord",
-                text: '<b style="color:blue">藍色：</b>ㄅ-3, ㄆ-2, ㄆ-4, ㄇ-1, ㄇ-5, ㄈ-2, ㄈ-4, ㄉ-3<br><br><b style="background:black;color:yellow">黃色：</b>ㄇ-3 (中間發光)',
-                cells: {
-                    'ㄅ-3':'blue',
-                    'ㄆ-2':'blue', 'ㄆ-4':'blue',
-                    'ㄇ-1':'blue', 'ㄇ-5':'blue',
-                    'ㄈ-2':'blue', 'ㄈ-4':'blue',
-                    'ㄉ-3':'blue',
-                    'ㄇ-3':'yellow'
-                }
+                title: "鑽石", type: "coord",
+                text: '<b style="color:blue">藍色：</b>ㄅ-3, ㄆ-2, ㄆ-4, ㄇ-1, ㄇ-5, ㄈ-2, ㄈ-4, ㄉ-3<br><br><b style="background:black;color:yellow">黃色：</b>ㄇ-3',
+                cells: { 'ㄅ-3':'blue', 'ㄆ-2':'blue', 'ㄆ-4':'blue', 'ㄇ-1':'blue', 'ㄇ-5':'blue', 'ㄈ-2':'blue', 'ㄈ-4':'blue', 'ㄉ-3':'blue', 'ㄇ-3':'yellow' }
             },
             8: {
-                title: "房子",
-                type: "coord",
-                text: '<b style="color:red">紅色(屋頂)：</b>ㄅ-3, ㄆ-2, ㄆ-3, ㄆ-4<br><br><b style="color:green">綠色(牆壁)：</b>ㄇ-2, ㄇ-3, ㄇ-4, ㄈ-2, ㄈ-4<br><br><b style="background:black;color:yellow">黃色(門)：</b>ㄈ-3',
-                cells: {
-                    'ㄅ-3':'red',
-                    'ㄆ-2':'red', 'ㄆ-3':'red', 'ㄆ-4':'red',
-                    'ㄇ-2':'green', 'ㄇ-3':'green', 'ㄇ-4':'green',
-                    'ㄈ-2':'green', 'ㄈ-4':'green',
-                    'ㄈ-3':'yellow'
-                }
+                title: "房子", type: "coord",
+                text: '<b style="color:red">紅色：</b>ㄅ-3, ㄆ-2, ㄆ-3, ㄆ-4<br><br><b style="color:green">綠色：</b>ㄇ-2, ㄇ-3, ㄇ-4, ㄈ-2, ㄈ-4<br><br><b style="background:black;color:yellow">黃色：</b>ㄈ-3',
+                cells: { 'ㄅ-3':'red', 'ㄆ-2':'red', 'ㄆ-3':'red', 'ㄆ-4':'red', 'ㄇ-2':'green', 'ㄇ-3':'green', 'ㄇ-4':'green', 'ㄈ-2':'green', 'ㄈ-4':'green', 'ㄈ-3':'yellow' }
             }
         };
 
         let currentTaskId = 0;
         let activeCell = null;
-
-        // --- 初始化 ---
-        const rowLabels = ['ㄅ','ㄆ','ㄇ','ㄈ','ㄉ','ㄊ','ㄋ','ㄌ','ㄍ','ㄎ','ㄏ','ㄐ','ㄑ','ㄒ','ㄓ']; // 15個
+        const rowLabels = ['ㄅ','ㄆ','ㄇ','ㄈ','ㄉ','ㄊ','ㄋ','ㄌ','ㄍ','ㄎ','ㄏ','ㄐ','ㄑ','ㄒ','ㄓ']; 
         const colCount = 15;
 
+        // --- 初始化 ---
         function init() {
             const grid = document.getElementById('grid');
             const headerRow = document.getElementById('header-row');
             const headerCol = document.getElementById('header-col');
 
-            // 1. 生成上方數字標頭 (1-15)
             for (let i = 1; i <= colCount; i++) {
                 let span = document.createElement('span');
                 span.innerText = i;
                 headerRow.appendChild(span);
             }
 
-            // 2. 生成左側注音標頭 (ㄅ-ㄓ)
             rowLabels.forEach(label => {
                 let span = document.createElement('span');
                 span.innerText = label;
                 headerCol.appendChild(span);
             });
 
-            // 3. 生成 15x15 網格
             for (let r = 0; r < rowLabels.length; r++) {
                 for (let c = 1; c <= colCount; c++) {
                     let cell = document.createElement('div');
                     cell.className = 'cell';
-                    // 賦予座標 ID，例如 "ㄅ-1"
                     let coordId = rowLabels[r] + '-' + c;
                     cell.dataset.id = coordId;
                     
-                    cell.onclick = function(e) {
-                        openColorPicker(e, cell);
+                    // 點擊觸發中央選單
+                    cell.onclick = function() {
+                        openColorPicker(cell);
                     };
                     
                     grid.appendChild(cell);
@@ -552,27 +498,18 @@
             }
         }
 
-        // --- 核心功能 ---
-
         function startGame() {
             document.getElementById('welcome-screen').style.display = 'none';
         }
 
         function showTask(id) {
             currentTaskId = id;
-            
-            // 更新按鈕狀態
             document.querySelectorAll('.task-btn').forEach(btn => btn.classList.remove('active'));
             let activeBtn = document.getElementById('btn-' + id);
             if(activeBtn) activeBtn.classList.add('active');
 
-            // 更新題目文字
             const task = tasks[id];
             document.getElementById('task-display').innerHTML = task.text;
-
-            // 清除版面 (可選，看是否要讓學生保留上一題的塗鴉)
-            // clearBoard(); 
-            // 建議：切換題目時最好檢查一下，這裡我們預設不自動清除，讓學生自己按
         }
 
         function clearBoard() {
@@ -582,77 +519,55 @@
             });
         }
 
-        // 顏色選擇器邏輯
-        const popup = document.getElementById('popup');
+        // --- 改良版選色邏輯 ---
+        const overlay = document.getElementById('color-picker-overlay');
 
-        function openColorPicker(e, cell) {
+        function openColorPicker(cell) {
             activeCell = cell;
-            
-            // 計算位置，讓 popup 出現在格子附近
-            const rect = cell.getBoundingClientRect();
-            // 修正 popup 位置，避免超出視窗
-            let top = rect.bottom + window.scrollY;
-            let left = rect.left + window.scrollX;
-            
-            // 簡單防止超出右邊界
-            if (left + 150 > window.innerWidth) {
-                left = window.innerWidth - 160;
-            }
-
-            popup.style.top = top + 'px';
-            popup.style.left = left + 'px';
-            popup.classList.add('show');
-            
-            e.stopPropagation(); // 防止冒泡
+            overlay.classList.add('show'); // 顯示遮罩與中央選單
         }
 
-        // 點擊顏色按鈕
+        function closeColorPicker() {
+            overlay.classList.remove('show');
+            activeCell = null;
+        }
+
+        // 綁定顏色按鈕事件
         document.querySelectorAll('.color-button').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', () => {
                 if (activeCell) {
                     const color = btn.dataset.color;
                     const cssColor = getComputedStyle(btn).backgroundColor;
                     
                     activeCell.style.backgroundColor = cssColor;
-                    activeCell.dataset.color = color; // 儲存顏色名稱 (red, yellow...)
+                    activeCell.dataset.color = color; 
                     
-                    checkAnswer(); // 每次填色後檢查
+                    checkAnswer();
                 }
-                popup.classList.remove('show');
-                activeCell = null;
+                closeColorPicker();
             });
         });
 
-        // 點擊其他地方關閉 Popup
-        document.addEventListener('click', (e) => {
-            if (!popup.contains(e.target) && !e.target.classList.contains('cell')) {
-                popup.classList.remove('show');
-                activeCell = null;
-            }
-        });
-
-        // 檢查答案邏輯
         function checkAnswer() {
-            if (tasks[currentTaskId].type === 'free') return; // 自由發揮不檢查
+            if (tasks[currentTaskId].type === 'free') return;
 
             const targetCells = tasks[currentTaskId].cells;
             let isComplete = true;
 
-            // 1. 檢查所有目標格子是否填對顏色
+            // 檢查目標格子
             for (let coord in targetCells) {
                 let cell = document.querySelector(`.cell[data-id="${coord}"]`);
                 if (!cell || cell.dataset.color !== targetCells[coord]) {
                     isComplete = false;
-                    break; // 只要有一格錯就沒過
+                    break;
                 }
             }
 
-            // 2. (嚴格模式) 檢查是否有多填了不該填的格子
+            // 嚴格模式：檢查是否多填
             if (isComplete) {
                 document.querySelectorAll('.cell').forEach(cell => {
                     const myColor = cell.dataset.color;
                     const myId = cell.dataset.id;
-                    // 如果這格有填色(且不是白色)，但它不在目標清單中 -> 錯誤
                     if (myColor && myColor !== 'white' && !targetCells[myId]) {
                         isComplete = false;
                     }
@@ -660,22 +575,15 @@
             }
 
             if (isComplete) {
-                showCompletion();
+                document.getElementById('completion-message').style.display = 'block';
             }
-        }
-
-        function showCompletion() {
-            document.getElementById('completion-message').style.display = 'block';
         }
 
         function closeCompletionMessage() {
             document.getElementById('completion-message').style.display = 'none';
         }
 
-        // 啟動
         init();
-        // 預設不選題目，或選第一題
-        // showTask(1); 
     </script>
 </body>
 </html>
